@@ -41,7 +41,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function generateShareableUrl(id: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  const baseUrl = process.env.NEXT_PUBLIC_HOST_NAME || window.location.origin;
   return `${baseUrl}/shared/${id}`;
 }
 

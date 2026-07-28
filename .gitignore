@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Secrets and Test Artifacts
+gcp-sa.json
+*.jar.txt
+jar.txt
+tests/.auth/
+test-results/
+playwright-report/

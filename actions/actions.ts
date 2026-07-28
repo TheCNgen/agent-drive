@@ -3,6 +3,7 @@
 import { authOptions } from '@/app/lib/backend/authConfig';
 import { getListingDetails } from '@/app/utils/listingDetailFetcher';
 import { CdpClient } from "@coinbase/cdp-sdk";
+import { config } from "@/app/lib/config";
 import axios from "axios";
 import { ethers } from 'ethers';
 import { getServerSession } from 'next-auth/next';
@@ -25,7 +26,7 @@ export async function purchaseFromMarketplace(wallet: `0x${string}`, id: string,
     var affiliate
     // Check affiliate code if provided
     if (affiliateCode) {
-      const affiliateResponse = await axios.get(`${process.env.NEXT_PUBLIC_HOST_NAME}/api/affiliates/code/${affiliateCode}`);
+      const affiliateResponse = await axios.get(`${config.hostName}/api/affiliates/code/${affiliateCode}`);
       if (!affiliateResponse.data.affiliate) {
         throw new Error("Invalid affiliate code");
       }
@@ -56,7 +57,7 @@ export async function purchaseFromMarketplace(wallet: `0x${string}`, id: string,
 
     const api = withPaymentInterceptor(
       axios.create({
-        baseURL: process.env.NEXT_PUBLIC_HOST_NAME,
+        baseURL: config.hostName,
         withCredentials: true,
         headers
       }),
@@ -253,7 +254,7 @@ export async function purchaseMonetizedLink(wallet: `0x${string}`, id: string) {
 
     const api = withPaymentInterceptor(
       axios.create({
-        baseURL: process.env.NEXT_PUBLIC_HOST_NAME,
+        baseURL: config.hostName,
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json',

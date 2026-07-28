@@ -1,6 +1,8 @@
+import { config } from "@/app/lib/config";
+
 export async function getListingDetails(listingId: string) {
     try {
-      const url = `${process.env.NEXTAUTH_URL}/api/listings/${listingId}/details`;
+      const url = `${config.auth.url}/api/listings/${listingId}/details`;
       console.log("Fetching listing details from URL:", url);
       
       // Use the internal API endpoint instead of direct database access
@@ -24,7 +26,7 @@ export async function getListingDetails(listingId: string) {
   
   export async function getSharedLinkDetails(linkId: string) {
     try {
-      const url = `${process.env.NEXTAUTH_URL}/api/shared-links/${linkId}/details`;
+      const url = `${config.auth.url}/api/shared-links/${linkId}/details`;
       console.log("Fetching shared link details from URL:", url);
       
       const response = await fetch(url);
