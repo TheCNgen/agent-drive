@@ -152,11 +152,4 @@ export async function downloadFile(url: string): Promise<Buffer> {
   }
 }
 
-// Alias for migration compatibility
-export const downloadFileFromS3 = downloadFile;
-// Keep the other original names as aliases for the initial commit too?
-export const uploadFileToS3 = uploadFile;
-export const deleteFileFromS3 = deleteFile;
-export const deleteFileFromS3ByUrl = deleteFileByUrl;
-export const extractKeyFromS3Url = extractKeyFromUrl;
-export const cleanupOrphanedS3File = cleanupOrphanedFile;
+// Removed S3 aliases

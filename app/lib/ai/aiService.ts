@@ -2,7 +2,7 @@ import { Transaction } from '@/app/lib/models';
 import { AIChunk } from '@/app/models/AIChunk';
 import { Item } from '@/app/models/Item';
 import { SharedLink } from '@/app/models/SharedLink';
-import { downloadFileFromS3 } from '../gcs';
+import { downloadFile } from '../gcs';
 import { generateEmbedding, generateEmbeddings } from './openaiClient';
 import { processTextFile } from './textProcessor';
 
@@ -385,7 +385,7 @@ export async function processFileForAI(itemId: string): Promise<void> {
     });
 
     // Download and process file using S3 service
-    const fileBuffer = await downloadFileFromS3(item.url);
+    const fileBuffer = await downloadFile(item.url);
     const processingResult = await processAndStoreChunks(itemId, fileBuffer, item?.mimeType);
     
     // Update item with results
@@ -463,7 +463,7 @@ export async function ensureAIGeneratedFolder(userId: string) {
 export async function generateAndSaveContent(params: GenerationParams): Promise<GenerationResult> {
   const { chatCompletion } = await import('./openaiClient');
   const { generatePDF } = await import('./pdfGenerator');
-  const { uploadFileToS3 } = await import('../s3');
+  const { uploadFile } = await import('../gcs');
   const { Item } = await import('../../models/Item');
 
   // Build context content if source query provided
@@ -503,7 +503,7 @@ export async function generateAndSaveContent(params: GenerationParams): Promise<
   // Upload to S3
   const arrayBuffer = new Uint8Array(pdfBuffer).buffer;
   const pdfFile = new File([arrayBuffer], fileName, { type: 'application/pdf' });
-  const uploadResult = await uploadFileToS3(pdfFile, fileName, params.userId);
+  const uploadResult = await uploadFile(pdfFile, fileName, params.userId);
 
   // Save as Item in MongoDB
   const newItem = await Item.create({

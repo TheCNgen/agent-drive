@@ -1,7 +1,7 @@
 import { authOptions } from '@/app/lib/backend/authConfig';
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
-import { deleteFileFromS3ByUrl } from '@/app/lib/gcs';
+import { deleteFileByUrl } from '@/app/lib/gcs';
 import { AIChunk } from '@/app/models/AIChunk';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
@@ -159,7 +159,7 @@ export async function DELETE(request: NextRequest) {
         for (const itemToDelete of itemsToDelete) {
           if (itemToDelete?.type === 'file' && itemToDelete.url && itemToDelete.url.startsWith('https://')) {
             s3DeletionPromises.push(
-              deleteFileFromS3ByUrl(itemToDelete.url)
+              deleteFileByUrl(itemToDelete.url)
                 .then(() => console.log(`Deleted S3 object: ${itemToDelete.url}`))
                 .catch(s3Error => console.error(`Failed to delete S3 object for item ${itemToDelete._id}:`, s3Error))
             );

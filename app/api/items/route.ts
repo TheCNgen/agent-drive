@@ -2,7 +2,7 @@ import { processFileForAI } from '@/app/lib/ai/aiService';
 import { authOptions } from '@/app/lib/backend/authConfig';
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
-import { cleanupOrphanedS3File, uploadFileToS3 } from '@/app/lib/gcs';
+import { cleanupOrphanedFile, uploadFile } from '@/app/lib/gcs';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
 
           if (config.gcs.bucketName) {
             try {
-              uploadResult = await uploadFileToS3(file, name, session.user.id);
+              uploadResult = await uploadFile(file, name, session.user.id);
               fileUrl = uploadResult.url;
               fileSize = uploadResult.size;
             } catch (error) {
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
           if (uploadResult && config.gcs.bucketName) {
             try {
               console.warn('Database operation failed, attempting S3 cleanup for:', uploadResult.url);
-              await cleanupOrphanedS3File(uploadResult);
+              await cleanupOrphanedFile(uploadResult);
             } catch (cleanupError) {
               console.error('Failed to cleanup S3 file:', cleanupError);
             }
