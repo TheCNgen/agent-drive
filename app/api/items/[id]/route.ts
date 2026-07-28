@@ -1,7 +1,7 @@
 import { authOptions } from '@/app/lib/backend/authConfig';
-import { validateS3Config } from '@/app/lib/config';
+import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
-import { deleteFileFromS3ByUrl } from '@/app/lib/s3';
+import { deleteFileFromS3ByUrl } from '@/app/lib/gcs';
 import { AIChunk } from '@/app/models/AIChunk';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
@@ -155,7 +155,7 @@ export async function DELETE(request: NextRequest) {
       await AIChunk.deleteMany({ item: { $in: itemIds } }).session(dbSession);
       
       const s3DeletionPromises = [];
-      if (validateS3Config()) {
+      if (config.gcs.bucketName) {
         for (const itemToDelete of itemsToDelete) {
           if (itemToDelete?.type === 'file' && itemToDelete.url && itemToDelete.url.startsWith('https://')) {
             s3DeletionPromises.push(

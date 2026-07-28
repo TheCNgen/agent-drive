@@ -2,7 +2,7 @@ import { Transaction } from '@/app/lib/models';
 import { AIChunk } from '@/app/models/AIChunk';
 import { Item } from '@/app/models/Item';
 import { SharedLink } from '@/app/models/SharedLink';
-import { downloadFileFromS3 } from '../s3';
+import { downloadFileFromS3 } from '../gcs';
 import { generateEmbedding, generateEmbeddings } from './openaiClient';
 import { processTextFile } from './textProcessor';
 
