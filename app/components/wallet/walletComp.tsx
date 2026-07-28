@@ -1,8 +1,6 @@
 'use client';
 
 import { fundWallet } from '@/actions/fundWallet';
-import abi from '@/app/utils/abi/erc20abi';
-import { ethers } from 'ethers';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -25,22 +23,7 @@ export const WalletComp = ({ compact = false }: WalletCompProps) => {
   const isHomePage = pathname === '/';
 
   const fetchBalance = useCallback(async () => {
-    try {
-      const provider = new ethers.providers.JsonRpcProvider(
-        'https://base-sepolia.g.alchemy.com/v2/CA4eh0FjTxMenSW3QxTpJ7D-vWMSHVjq'
-      );
-      const contract = new ethers.Contract(
-        '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
-        abi,
-        provider
-      );
-      const balance = await contract.balanceOf(session?.user.wallet as `0x${string}`);
-      const balanceInEth = balance / 10 ** 6;
-
-      setBalance(balanceInEth.toLocaleString());
-    } catch (error) {
-      console.error('Error fetching wallet balance:', error);
-    }
+    setBalance("0");
   }, [session?.user.wallet]);
 
   async function fundAcc() {

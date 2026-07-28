@@ -18,6 +18,14 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Wallet is required'],
     unique: true,
   },
+  accountId: {
+    type: String,
+    required: false, // Make optional for backwards compatibility
+  },
+  privateKey: {
+    type: String,
+    required: false, // Make optional for backwards compatibility
+  },
   name: {
     type: String,
     required: [true, 'Name is required'],

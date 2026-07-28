@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { secrets, validateMongoConfig } from './config';
+import { config } from './config';
 
 declare global {
   var mongoose: {
@@ -8,7 +8,7 @@ declare global {
   } | undefined;
 }
 
-if (!validateMongoConfig()) {
+if (!config.mongo.uri) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env');
 }
 
@@ -31,7 +31,7 @@ async function connectDB() {
       bufferCommands: false
     };
 
-    cached.promise = mongoose.connect(secrets.MONGODB_URI, opts);
+    cached.promise = mongoose.connect(config.mongo.uri, opts);
   }
 
   try {

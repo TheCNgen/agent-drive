@@ -1,5 +1,6 @@
 import { Listing } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
+import { submitHCSRecord } from '@/app/lib/hedera';
 import {
   validateMonetizedContent,
   withAuthCheck,
@@ -142,6 +143,15 @@ export async function PATCH(
         .populate('seller', 'name wallet')
         .lean<ListingDocument>();
       
+      if (updatedListing) {
+        submitHCSRecord('LISTING_UPDATED', {
+          listingId: updatedListing._id.toString(),
+          seller: updatedListing.seller._id.toString(),
+          price: updatedListing.price || updateData.price,
+          status: updateData.status
+        });
+      }
+      
       return NextResponse.json(updatedListing);
     });
   });
@@ -156,8 +166,14 @@ export async function DELETE(
     const params = await context.params;
     
     return await withTransaction(async (session) => {
-      await getListingWithAuth(params.id, userId, true);
+      const listing = await getListingWithAuth(params.id, userId, true);
       await Listing.findOneAndDelete({ _id: params.id }).session(session);
+      
+      submitHCSRecord('LISTING_DELETED', {
+        listingId: params.id,
+        seller: listing.seller._id.toString()
+      });
+      
       return NextResponse.json({ message: 'Listing deleted successfully' });
     });
   });

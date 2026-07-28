@@ -1,4 +1,4 @@
-import { purchaseMonetizedLink } from "@/actions/actions";
+import axios from "axios";
 
 export interface SharedLink {
   _id: string;
@@ -115,7 +115,11 @@ export async function payForSharedLink(
   wallet: `0x${string}`,
 ): Promise<any> {
   try {
-    return await purchaseMonetizedLink(wallet, linkId);
+    const response = await axios.post(`/api/shared-links/${linkId}/purchase`, { wallet });
+    if (!response || response.status !== 201) {
+      throw new Error("Purchase failed - Invalid response");
+    }
+    return response.data;
   } catch (error: any) {
     if (error.response?.status === 401) {
       throw new Error("Unauthorized - Please log in");

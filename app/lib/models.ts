@@ -7,6 +7,8 @@ import { Listing } from '@/app/models/Listing';
 import { SharedLink } from '@/app/models/SharedLink';
 import { Transaction } from '@/app/models/Transaction';
 import User from '@/app/models/User';
+import { Affiliate } from '@/app/models/Affiliate';
+import { Commission } from '@/app/models/Commission';
 
 // Export all models for convenience
 export {
@@ -15,6 +17,8 @@ export {
     Listing,
     SharedLink,
     Transaction,
-    User
+    User,
+    Affiliate,
+    Commission
 };
 

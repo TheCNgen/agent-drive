@@ -1,4 +1,3 @@
-import { purchaseFromMarketplace } from '@/actions/actions';
 import axios from 'axios';
 import { Transaction, TransactionFilters, TransactionsResponse } from '../types';
 import { handleApiError } from './marketplaceFunctions';
@@ -116,7 +115,8 @@ export async function purchaseListing(
   affiliateCode?: string
 ): Promise<any> {
   try {
-    const result = await purchaseFromMarketplace(wallet, listingId, affiliateCode);
+    const response = await axios.post(`/api/listings/${listingId}/purchase`, { affiliateCode });
+    const result = response.data;
     
     if (!result) {
       throw new Error('No response received from purchase');

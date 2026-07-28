@@ -1,17 +1,17 @@
-import { SharedLink, Transaction } from '@/app/lib/models';
+import { SharedLink, Transaction, User } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
 import { Affiliate } from '@/app/models/Affiliate';
 import { Commission } from '@/app/models/Commission';
 import { Types } from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/lib/backend/authConfig';
+import { Client, TransferTransaction, Hbar } from '@hashgraph/sdk';
+import { submitHCSRecord } from '@/app/lib/hedera';
 
-interface PaymentResponse {
-  transaction: string;
-  network: string;
-  payer: string;
-  success: boolean;
-}
+// 5% platform fee
+const PLATFORM_FEE_PERCENTAGE = 5;
 
 interface SharedLinkDocument {
   _id: Types.ObjectId;
@@ -28,6 +28,7 @@ interface SharedLinkDocument {
     name: string;
     email: string;
     wallet: string;
+    accountId?: string;
   };
   item: {
     _id: Types.ObjectId;
@@ -44,17 +45,6 @@ const generateReceiptNumber = (): string => {
   return `RCP-${timestamp}-${random}`;
 };
 
-const parsePaymentResponse = (paymentResponseHeader: string | null): PaymentResponse | null => {
-  if (!paymentResponseHeader) return null;
-  
-  try {
-    return JSON.parse(paymentResponseHeader);
-  } catch (error) {
-    console.error('Error parsing x-payment-response:', error);
-    return null;
-  }
-};
-
 async function getSharedLinkWithAuth(
   linkId: string,
   userId?: string
@@ -64,7 +54,7 @@ async function getSharedLinkWithAuth(
     isActive: true,
     type: 'monetized'
   })
-  .populate('owner', 'name email wallet')
+  .populate('owner', 'name email wallet accountId')
   .populate('item', 'name type size mimeType')
   .lean<SharedLinkDocument>();
 
@@ -96,26 +86,86 @@ export async function POST(
   { params }: { params: Promise<{ linkId: string }> }
 ) {
   try {
-    const userIdFromHeader = request.headers.get('x-user-id');
-    const userEmailFromHeader = request.headers.get('x-user-email');
-    const affiliateCodeFromHeader = request.headers.get('x-affiliate-code');
-    
-    if (!userIdFromHeader) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+    
+    const userIdFromHeader = session.user.id;
+    let affiliateCodeFromHeader = null;
+    try {
+      const body = await request.json();
+      affiliateCodeFromHeader = body.affiliateCode;
+    } catch(e) {}
+    
     await connectDB();
     
+    const buyerUser = await User.findById(userIdFromHeader);
+    if (!buyerUser || !buyerUser.accountId || !buyerUser.privateKey) {
+      return NextResponse.json({ error: 'Buyer Hedera account not found' }, { status: 400 });
+    }
+
     const { linkId } = await params;
     if (!linkId) {
       return NextResponse.json({ error: 'Link ID is required' }, { status: 400 });
     }
 
     const sharedLink = await getSharedLinkWithAuth(linkId, userIdFromHeader);
-    const paymentResponse = parsePaymentResponse(
-      request.headers.get('x-payment-response')
-    );
+
+    const sellerUser = sharedLink.owner;
+    if (!sellerUser.accountId) {
+      return NextResponse.json({ error: 'Seller Hedera account not found' }, { status: 400 });
+    }
+
+    const price = sharedLink.price;
+    const platformFee = (price * PLATFORM_FEE_PERCENTAGE) / 100;
+    let affiliateFee = 0;
+    let affiliateUser = null;
+    let affiliateRecord = null;
     
+    if (affiliateCodeFromHeader && sharedLink.affiliateEnabled) {
+      affiliateRecord = await Affiliate.findOne({ affiliateCode: affiliateCodeFromHeader, sharedLink: sharedLink._id, status: 'active' }).populate('affiliateUser');
+      if (affiliateRecord && affiliateRecord.affiliateUser && affiliateRecord.affiliateUser.accountId && affiliateRecord.affiliateUser._id.toString() !== userIdFromHeader) {
+        affiliateFee = (price * affiliateRecord.commissionRate) / 100;
+        affiliateUser = affiliateRecord.affiliateUser;
+      }
+    }
+
+    const sellerAmount = price - platformFee - affiliateFee;
+    const platformAccount = process.env.HEDERA_PLATFORM_FEE_ACCOUNT;
+    if (!platformAccount) {
+      return NextResponse.json({ error: 'Platform fee account not configured' }, { status: 500 });
+    }
+
+    const operatorId = process.env.HEDERA_OPERATOR_ID;
+    const operatorKey = process.env.HEDERA_OPERATOR_KEY;
+
+    if (!operatorId || !operatorKey) {
+      return NextResponse.json({ error: 'Hedera operator configuration missing from environment variables.' }, { status: 500 });
+    }
+
+    const client = Client.forTestnet();
+    // Use buyer's private key to sign the transaction since they are paying!
+    client.setOperator(buyerUser.accountId, buyerUser.privateKey);
+
+    let tx = new TransferTransaction()
+      .addHbarTransfer(buyerUser.accountId, new Hbar(-price))
+      .addHbarTransfer(platformAccount, new Hbar(platformFee))
+      .addHbarTransfer(sellerUser.accountId!, new Hbar(sellerAmount));
+      
+    if (affiliateUser) {
+      tx = tx.addHbarTransfer(affiliateUser.accountId, new Hbar(affiliateFee));
+    }
+    
+    const txResponse = await tx.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    
+    if (receipt.status.toString() !== "SUCCESS") {
+      return NextResponse.json({ error: 'Hedera transaction failed' }, { status: 400 });
+    }
+    
+    const blockchainTransactionId = txResponse.transactionId.toString();
+
     const transaction = await Transaction.create({
       sharedLink: sharedLink._id,
       buyer: userIdFromHeader,
@@ -123,18 +173,17 @@ export async function POST(
       item: sharedLink.item._id,
       amount: sharedLink.price,
       status: 'completed',
-      transactionId: uuidv4(),
+      transactionId: blockchainTransactionId,
       receiptNumber: generateReceiptNumber(),
       purchaseDate: new Date(),
       transactionType: 'purchase',
       paymentFlow: 'direct',
-      metadata: paymentResponse ? {
-        blockchainTransaction: paymentResponse.transaction,
-        network: paymentResponse.network,
-        payer: paymentResponse.payer,
-        success: paymentResponse.success,
-        paymentResponseRaw: request.headers.get('x-payment-response')
-      } : undefined
+      metadata: {
+        blockchainTransaction: blockchainTransactionId,
+        network: 'hedera-testnet',
+        payer: buyerUser.accountId,
+        success: true
+      }
     });
 
     await SharedLink.findByIdAndUpdate(sharedLink._id, {
@@ -142,55 +191,102 @@ export async function POST(
     });
 
     let commission = null;
-    if (affiliateCodeFromHeader && sharedLink.affiliateEnabled) {
+    let commissionTransaction = null;
+    let sellerTransaction = null;
+    
+    if (affiliateUser && affiliateRecord) {
       try {
-        const [affiliate] = await Promise.all([
-          Affiliate.findOne({
+        // Create commission transaction record (platform pays affiliate)
+        commissionTransaction = await Transaction.create({
+          sharedLink: sharedLink._id,
+          buyer: sharedLink.owner._id, // platform/original seller pays
+          seller: affiliateUser._id, // affiliate receives
+          item: sharedLink.item._id,
+          amount: affiliateFee,
+          status: 'completed', // completed immediately via Hedera
+          transactionId: uuidv4(),
+          receiptNumber: generateReceiptNumber(),
+          purchaseDate: new Date(),
+          transactionType: 'commission',
+          paymentFlow: 'admin',
+          parentTransaction: transaction._id,
+          metadata: {
             affiliateCode: affiliateCodeFromHeader,
-            sharedLink: sharedLink._id,
-            status: 'active'
-          }),
-          transaction.populate([
-            { path: 'buyer', select: 'name email' },
-            { path: 'seller', select: 'name email' },
-            { path: 'item', select: 'name type size mimeType' }
-          ])
-        ]);
+            commissionRate: affiliateRecord.commissionRate,
+            originalPurchaseAmount: sharedLink.price,
+            originalBuyer: userIdFromHeader
+          }
+        });
 
-        if (affiliate && affiliate.affiliateUser.toString() !== userIdFromHeader) {
-          const commissionAmount = (sharedLink.price * affiliate.commissionRate) / 100;
-          
-          [commission] = await Promise.all([
-            Commission.create({
-              affiliate: affiliate._id,
-              originalTransaction: transaction._id,
-              commissionRate: affiliate.commissionRate,
-              commissionAmount,
-              status: 'pending'
-            }),
-            Affiliate.findByIdAndUpdate(affiliate._id, {
-              $inc: { 
-                totalEarnings: commissionAmount,
-                totalSales: 1
-              }
-            })
-          ]);
-        }
+        // Create seller transaction record (platform pays seller)
+        sellerTransaction = await Transaction.create({
+          sharedLink: sharedLink._id,
+          buyer: sharedLink.owner._id, // platform/original seller pays (self-transaction for accounting)
+          seller: sharedLink.owner._id, // original seller receives
+          item: sharedLink.item._id,
+          amount: sellerAmount,
+          status: 'completed', // completed immediately via Hedera
+          transactionId: uuidv4(),
+          receiptNumber: generateReceiptNumber(),
+          purchaseDate: new Date(),
+          transactionType: 'sale',
+          paymentFlow: 'admin',
+          parentTransaction: transaction._id,
+          metadata: {
+            isAffiliateDistribution: true,
+            originalPurchaseAmount: sharedLink.price,
+            commissionDeducted: affiliateFee,
+            originalBuyer: userIdFromHeader
+          }
+        });
+
+        await Transaction.findByIdAndUpdate(transaction._id, {
+          affiliateInfo: {
+            isAffiliateSale: true,
+            originalAmount: sharedLink.price,
+            netAmount: sellerAmount,
+            commissionDistribution: [{
+              affiliateId: affiliateRecord._id,
+              amount: affiliateFee,
+              commissionRate: affiliateRecord.commissionRate
+            }]
+          }
+        });
+
+        [commission] = await Promise.all([
+          Commission.create({
+            affiliate: affiliateRecord._id,
+            originalTransaction: transaction._id,
+            commissionTransaction: commissionTransaction._id,
+            commissionRate: affiliateRecord.commissionRate,
+            commissionAmount: affiliateFee,
+            status: 'completed'
+          }),
+          Affiliate.findByIdAndUpdate(affiliateRecord._id, {
+            $inc: { 
+              totalEarnings: affiliateFee,
+              totalSales: 1
+            }
+          })
+        ]);
       } catch (affiliateError) {
         console.error('Error processing affiliate commission:', affiliateError);
       }
-    } else {
-      await transaction.populate([
-        { path: 'buyer', select: 'name email' },
-        { path: 'seller', select: 'name email' },
-        { path: 'item', select: 'name type size mimeType' }
-      ]);
     }
     
+    submitHCSRecord('TRANSACTION_COMPLETED', {
+      transactionId: transaction._id.toString(),
+      blockchainTransactionId: blockchainTransactionId,
+      buyer: userIdFromHeader,
+      seller: sharedLink.owner._id.toString(),
+      item: sharedLink.item._id.toString(),
+      amount: sharedLink.price
+    });
+
     return NextResponse.json({
       transactionData: {
         transaction,
-        paymentDetails: paymentResponse,
+        paymentDetails: { transaction: blockchainTransactionId, network: 'hedera-testnet', payer: buyerUser.accountId, success: true },
         message: 'Purchase completed successfully',
         sharedLink: {
           linkId: sharedLink.linkId,
@@ -198,7 +294,9 @@ export async function POST(
         },
         affiliateCommission: commission ? {
           amount: commission.commissionAmount,
-          rate: commission.commissionRate
+          rate: commission.commissionRate,
+          commissionTransaction: commissionTransaction,
+          sellerTransaction: sellerTransaction
         } : null
       }
     }, { status: 201 });
@@ -217,4 +315,4 @@ export async function POST(
     
     return NextResponse.json({ error: message }, { status });
   }
-} 
+}

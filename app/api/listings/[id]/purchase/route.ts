@@ -7,67 +7,18 @@ import { Commission } from '@/app/models/Commission';
 import { Types } from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/lib/backend/authConfig';
+import { Client, TransferTransaction, Hbar } from '@hashgraph/sdk';
+import { submitHCSRecord } from '@/app/lib/hedera';
 
-interface PaymentResponse {
-  transaction: string;
-  network: string;
-  payer: string;
-  success: boolean;
-}
-
-interface QueueItem {
-  originalId: string;
-  newParentId: string;
-  name: string;
-}
-
-interface CopiedItemResult {
-  _id: Types.ObjectId;
-  name: string;
-  path: string;
-}
-
-interface ItemDocument {
-  _id: Types.ObjectId;
-  name: string;
-  type: string;
-  parentId: string;
-  size?: number;
-  mimeType?: string;
-  url?: string;
-  owner: string;
-  contentSource?: string;
-}
-
-interface ListingDocument {
-  _id: Types.ObjectId;
-  status: string;
-  price: number;
-  title: string;
-  affiliateEnabled?: boolean;
-  seller: {
-    _id: Types.ObjectId;
-  };
-  item: {
-    _id: Types.ObjectId;
-  };
-}
+// 5% platform fee
+const PLATFORM_FEE_PERCENTAGE = 5;
 
 const generateReceiptNumber = (): string => {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `RCP-${timestamp}-${random}`;
-};
-
-const parsePaymentResponse = (paymentResponseHeader: string | null): PaymentResponse | null => {
-  if (!paymentResponseHeader) return null;
-  
-  try {
-    return JSON.parse(paymentResponseHeader);
-  } catch (error) {
-    console.error('Error parsing x-payment-response:', error);
-    return null;
-  }
 };
 
 async function getOrCreateMarketplaceFolder(buyerId: string): Promise<Types.ObjectId> {
@@ -94,7 +45,7 @@ async function getOrCreateMarketplaceFolder(buyerId: string): Promise<Types.Obje
   return marketplaceFolder._id;
 }
 
-async function copyPurchasedItem(originalItemId: string, newParentId: string, buyerId: string): Promise<CopiedItemResult> {
+async function copyPurchasedItem(originalItemId: string, newParentId: string, buyerId: string) {
   const copiedItem = await copyItemWithBFS(originalItemId, newParentId, buyerId, '(Purchased)');
   return {
     _id: copiedItem._id,
@@ -108,16 +59,26 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userIdFromHeader = request.headers.get('x-user-id');
-    const userEmailFromHeader = request.headers.get('x-user-email');
-    const affiliateCodeFromHeader = request.headers.get('x-affiliate-code');
-    
-    if (!userIdFromHeader) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+    
+    const userIdFromHeader = session.user.id;
+    
+    let affiliateCodeFromHeader = null;
+    try {
+      const body = await request.json();
+      affiliateCodeFromHeader = body.affiliateCode;
+    } catch(e) {}
+    
     await connectDB();
     
+    const buyerUser = await User.findById(userIdFromHeader);
+    if (!buyerUser || !buyerUser.accountId || !buyerUser.privateKey) {
+      return NextResponse.json({ error: 'Buyer Hedera account not found' }, { status: 400 });
+    }
+
     const params = await context.params;
     const { id } = params;
     if (!id) {
@@ -126,23 +87,23 @@ export async function POST(
 
     const listing = await Listing.findById(id)
       .populate('item')
-      .populate('seller')
-      .lean<ListingDocument>();
+      .populate('seller');
 
     if (!listing) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
 
     if (listing.status !== 'active') {
-      return NextResponse.json({ 
-        error: 'This listing is no longer available for purchase' 
-      }, { status: 400 });
+      return NextResponse.json({ error: 'This listing is no longer available for purchase' }, { status: 400 });
     }
 
     if (listing.seller._id.toString() === userIdFromHeader) {
-      return NextResponse.json({ 
-        error: 'You cannot purchase your own listing' 
-      }, { status: 400 });
+      return NextResponse.json({ error: 'You cannot purchase your own listing' }, { status: 400 });
+    }
+    
+    const sellerUser = listing.seller;
+    if (!sellerUser.accountId) {
+      return NextResponse.json({ error: 'Seller Hedera account not found' }, { status: 400 });
     }
 
     const existingTransaction = await Transaction.exists({
@@ -152,14 +113,57 @@ export async function POST(
     });
 
     if (existingTransaction) {
-      return NextResponse.json({ 
-        error: 'You have already purchased this item' 
-      }, { status: 400 });
+      return NextResponse.json({ error: 'You have already purchased this item' }, { status: 400 });
     }
 
-    const paymentResponse = parsePaymentResponse(
-      request.headers.get('x-payment-response')
-    );
+    const price = listing.price;
+    const platformFee = (price * PLATFORM_FEE_PERCENTAGE) / 100;
+    let affiliateFee = 0;
+    let affiliateUser = null;
+    let affiliateRecord = null;
+    
+    if (affiliateCodeFromHeader && listing.affiliateEnabled) {
+      affiliateRecord = await Affiliate.findOne({ affiliateCode: affiliateCodeFromHeader, listing: id, status: 'active' }).populate('affiliateUser');
+      if (affiliateRecord && affiliateRecord.affiliateUser && affiliateRecord.affiliateUser.accountId && affiliateRecord.affiliateUser._id.toString() !== userIdFromHeader) {
+        affiliateFee = (price * affiliateRecord.commissionRate) / 100;
+        affiliateUser = affiliateRecord.affiliateUser;
+      }
+    }
+
+    const sellerAmount = price - platformFee - affiliateFee;
+    const platformAccount = process.env.HEDERA_PLATFORM_FEE_ACCOUNT;
+    if (!platformAccount) {
+      return NextResponse.json({ error: 'Platform fee account not configured' }, { status: 500 });
+    }
+    
+    const operatorId = process.env.HEDERA_OPERATOR_ID;
+    const operatorKey = process.env.HEDERA_OPERATOR_KEY;
+
+    if (!operatorId || !operatorKey) {
+      return NextResponse.json({ error: 'Hedera operator configuration missing from environment variables.' }, { status: 500 });
+    }
+
+    const client = Client.forTestnet();
+    // Use buyer's private key to sign the transaction since they are paying!
+    client.setOperator(buyerUser.accountId, buyerUser.privateKey);
+
+    let tx = new TransferTransaction()
+      .addHbarTransfer(buyerUser.accountId, new Hbar(-price))
+      .addHbarTransfer(platformAccount, new Hbar(platformFee))
+      .addHbarTransfer(sellerUser.accountId, new Hbar(sellerAmount));
+      
+    if (affiliateUser) {
+      tx = tx.addHbarTransfer(affiliateUser.accountId, new Hbar(affiliateFee));
+    }
+    
+    const txResponse = await tx.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    
+    if (receipt.status.toString() !== "SUCCESS") {
+      return NextResponse.json({ error: 'Hedera transaction failed' }, { status: 400 });
+    }
+    
+    const blockchainTransactionId = txResponse.transactionId.toString();
     
     const transaction = await Transaction.create({
       listing: listing._id,
@@ -168,154 +172,127 @@ export async function POST(
       item: listing.item._id,
       amount: listing.price,
       status: 'completed',
-      transactionId: uuidv4(),
+      transactionId: blockchainTransactionId,
       receiptNumber: generateReceiptNumber(),
       purchaseDate: new Date(),
       transactionType: 'purchase',
       paymentFlow: 'direct',
-      metadata: paymentResponse ? {
-        blockchainTransaction: paymentResponse.transaction,
-        network: paymentResponse.network,
-        payer: paymentResponse.payer,
-        success: paymentResponse.success,
-        paymentResponseRaw: request.headers.get('x-payment-response')
-      } : undefined
+      metadata: {
+        blockchainTransaction: blockchainTransactionId,
+        network: 'hedera-testnet',
+        payer: buyerUser.accountId,
+        success: true
+      }
     });
 
     const marketplaceFolderId = await getOrCreateMarketplaceFolder(userIdFromHeader);
     const copiedItem = await copyPurchasedItem(listing.item._id.toString(), marketplaceFolderId.toString(), userIdFromHeader);
 
-    // Automatically process the purchased file for AI use
     try {
-      // Mark the file as marketplace content
-      await Item.findByIdAndUpdate(copiedItem._id, {
-        contentSource: 'marketplace_purchase'
-      });
-      
-      // Process the file for AI
+      await Item.findByIdAndUpdate(copiedItem._id, { contentSource: 'marketplace_purchase' });
       await processFileForAI(copiedItem._id.toString());
     } catch (processError) {
       console.error('Error auto-processing purchased content for AI:', processError);
-      // Don't fail the purchase if AI processing fails
     }
 
     let commission = null;
     let commissionTransaction = null;
     let sellerTransaction = null;
     
-    if (affiliateCodeFromHeader && listing.affiliateEnabled) {
+    if (affiliateUser && affiliateRecord) {
       try {
-        const [affiliate] = await Promise.all([
-          Affiliate.findOne({
+        // Create commission transaction record (platform pays affiliate)
+        commissionTransaction = await Transaction.create({
+          listing: listing._id,
+          buyer: listing.seller._id, // platform/original seller pays
+          seller: affiliateUser._id, // affiliate receives
+          item: listing.item._id,
+          amount: affiliateFee,
+          status: 'completed', // completed immediately via Hedera
+          transactionId: uuidv4(),
+          receiptNumber: generateReceiptNumber(),
+          purchaseDate: new Date(),
+          transactionType: 'commission',
+          paymentFlow: 'admin',
+          parentTransaction: transaction._id,
+          metadata: {
             affiliateCode: affiliateCodeFromHeader,
-            listing: id,
-            status: 'active'
+            commissionRate: affiliateRecord.commissionRate,
+            originalPurchaseAmount: listing.price,
+            originalBuyer: userIdFromHeader
+          }
+        });
+
+        // Create seller transaction record (platform pays seller)
+        sellerTransaction = await Transaction.create({
+          listing: listing._id,
+          buyer: listing.seller._id, // platform/original seller pays (self-transaction for accounting)
+          seller: listing.seller._id, // original seller receives
+          item: listing.item._id,
+          amount: sellerAmount,
+          status: 'completed', // completed immediately via Hedera
+          transactionId: uuidv4(),
+          receiptNumber: generateReceiptNumber(),
+          purchaseDate: new Date(),
+          transactionType: 'sale',
+          paymentFlow: 'admin',
+          parentTransaction: transaction._id,
+          metadata: {
+            isAffiliateDistribution: true,
+            originalPurchaseAmount: listing.price,
+            commissionDeducted: affiliateFee,
+            originalBuyer: userIdFromHeader
+          }
+        });
+
+        await Transaction.findByIdAndUpdate(transaction._id, {
+          affiliateInfo: {
+            isAffiliateSale: true,
+            originalAmount: listing.price,
+            netAmount: sellerAmount,
+            commissionDistribution: [{
+              affiliateId: affiliateRecord._id,
+              amount: affiliateFee,
+              commissionRate: affiliateRecord.commissionRate
+            }]
+          }
+        });
+
+        [commission] = await Promise.all([
+          Commission.create({
+            affiliate: affiliateRecord._id,
+            originalTransaction: transaction._id,
+            commissionTransaction: commissionTransaction._id,
+            commissionRate: affiliateRecord.commissionRate,
+            commissionAmount: affiliateFee,
+            status: 'completed'
           }),
-          transaction.populate([
-            { path: 'listing', select: 'title price' },
-            { path: 'buyer', select: 'name email' },
-            { path: 'seller', select: 'name email' },
-            { path: 'item', select: 'name type size mimeType' }
-          ])
+          Affiliate.findByIdAndUpdate(affiliateRecord._id, {
+            $inc: { 
+              totalEarnings: affiliateFee,
+              totalSales: 1
+            }
+          })
         ]);
-
-        if (affiliate && affiliate.affiliateUser.toString() !== userIdFromHeader) {
-          const commissionAmount = (listing.price * affiliate.commissionRate) / 100;
-          const sellerAmount = listing.price - commissionAmount;
-          
-          // Create commission transaction record (platform pays affiliate)
-          commissionTransaction = await Transaction.create({
-            listing: listing._id,
-            buyer: listing.seller._id, // platform/original seller pays
-            seller: affiliate.affiliateUser, // affiliate receives
-            item: listing.item._id,
-            amount: commissionAmount,
-            status: 'pending',
-            transactionId: uuidv4(),
-            receiptNumber: generateReceiptNumber(),
-            purchaseDate: new Date(),
-            transactionType: 'commission',
-            paymentFlow: 'admin',
-            parentTransaction: transaction._id,
-            metadata: {
-              affiliateCode: affiliateCodeFromHeader,
-              commissionRate: affiliate.commissionRate,
-              originalPurchaseAmount: listing.price,
-              originalBuyer: userIdFromHeader
-            }
-          });
-
-          // Create seller transaction record (platform pays seller)
-          sellerTransaction = await Transaction.create({
-            listing: listing._id,
-            buyer: listing.seller._id, // platform/original seller pays (self-transaction for accounting)
-            seller: listing.seller._id, // original seller receives
-            item: listing.item._id,
-            amount: sellerAmount,
-            status: 'pending',
-            transactionId: uuidv4(),
-            receiptNumber: generateReceiptNumber(),
-            purchaseDate: new Date(),
-            transactionType: 'sale',
-            paymentFlow: 'admin',
-            parentTransaction: transaction._id,
-            metadata: {
-              isAffiliateDistribution: true,
-              originalPurchaseAmount: listing.price,
-              commissionDeducted: commissionAmount,
-              originalBuyer: userIdFromHeader
-            }
-          });
-
-          // Update original transaction with affiliate info
-          await Transaction.findByIdAndUpdate(transaction._id, {
-            affiliateInfo: {
-              isAffiliateSale: true,
-              originalAmount: listing.price,
-              netAmount: sellerAmount,
-              commissionDistribution: [{
-                affiliateId: affiliate._id,
-                amount: commissionAmount,
-                commissionRate: affiliate.commissionRate
-              }]
-            }
-          });
-
-          // Create commission record linking to commission transaction
-          [commission] = await Promise.all([
-            Commission.create({
-              affiliate: affiliate._id,
-              originalTransaction: transaction._id,
-              commissionTransaction: commissionTransaction._id,
-              commissionRate: affiliate.commissionRate,
-              commissionAmount,
-              status: 'pending'
-            }),
-            Affiliate.findByIdAndUpdate(affiliate._id, {
-              $inc: { 
-                totalEarnings: commissionAmount,
-                totalSales: 1
-              }
-            })
-          ]);
-        }
       } catch (affiliateError) {
         console.error('Error processing affiliate commission:', affiliateError);
       }
-    } else {
-      await transaction.populate([
-        { path: 'listing', select: 'title price' },
-        { path: 'buyer', select: 'name email' },
-        { path: 'seller', select: 'name email' },
-        { path: 'item', select: 'name type size mimeType' }
-      ]);
     }
+
+    submitHCSRecord('TRANSACTION_COMPLETED', {
+      transactionId: transaction._id.toString(),
+      blockchainTransactionId: blockchainTransactionId,
+      buyer: userIdFromHeader,
+      seller: listing.seller._id.toString(),
+      item: listing.item._id.toString(),
+      amount: listing.price
+    });
 
     return NextResponse.json({
       transactionData: {
         transaction,
         copiedItem,
-        paymentDetails: paymentResponse,
+        paymentDetails: { transaction: blockchainTransactionId, network: 'hedera-testnet', payer: buyerUser.accountId, success: true },
         message: 'Purchase completed successfully',
         affiliateCommission: commission ? {
           commission: commission,
@@ -341,4 +318,4 @@ export async function POST(
     
     return NextResponse.json({ error: message }, { status });
   }
-} 
+}

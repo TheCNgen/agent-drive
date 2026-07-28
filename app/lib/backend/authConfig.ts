@@ -1,13 +1,13 @@
 import connectDB from '@/app/lib/mongodb';
 import { Item } from '@/app/models/Item';
 import User from '@/app/models/User';
-import { CdpClient } from "@coinbase/cdp-sdk";
+import { createHederaAccount } from '@/app/lib/hedera';
 import mongoose from 'mongoose';
 import { AuthOptions, DefaultSession, User as NextAuthUser } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { revalidatePath } from 'next/cache';
-import { secrets } from '../config';
+import { config } from '../config';
 
 
 interface CustomUser extends NextAuthUser {
@@ -64,16 +64,16 @@ export const authOptions: AuthOptions = {
                 throw new Error('User already exists with this email');
               }
 
-              console.log("Creating wallet account...");
-              const cdp = new CdpClient();
-              const account = await cdp.evm.createAccount();
-              console.log("Wallet account created:", account.address);
+              console.log("Creating Hedera account for user...");
+              const { accountId, privateKey, evmAddress } = await createHederaAccount();
 
               const newUser = new User({
                 name: credentials.name,
                 email: credentials.email,
                 password: credentials.password,
-                wallet: account.address
+                wallet: evmAddress,
+                accountId,
+                privateKey
               });
 
               const rootFolder = new Item({
@@ -131,7 +131,7 @@ export const authOptions: AuthOptions = {
       }
     })
   ],
-  secret: secrets.NEXTAUTH_SECRET,
+  secret: config.auth.secret,
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60,

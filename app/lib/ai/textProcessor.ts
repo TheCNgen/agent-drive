@@ -1,4 +1,5 @@
 import mammoth from 'mammoth';
+import { Mistral } from '@mistralai/mistralai';
 
 // Constants
 const TEXT_PROCESSING_CONFIG = {
@@ -52,22 +53,6 @@ export interface ProcessedText {
   topics: string[];
 }
 
-interface PDFPage {
-  Texts?: PDFTextBlock[];
-}
-
-interface PDFTextBlock {
-  R?: PDFTextRun[];
-}
-
-interface PDFTextRun {
-  T?: string;
-}
-
-interface PDFData {
-  Pages?: PDFPage[];
-}
-
 interface ChunkingOptions {
   maxChunkSize?: number;
   minChunkLength?: number;
@@ -88,100 +73,52 @@ function createPDFError(message: string, originalError?: any): Error {
   return new Error(`${message}: ${errorMessage}`);
 }
 
-function decodeAndExtractText(textRun: PDFTextRun): string {
-  if (!textRun.T) return '';
+
+async function extractPDFText(fileBuffer: Buffer): Promise<string> {
+  if (!process.env.MISTRAL_API_KEY) {
+    throw new Error('MISTRAL_API_KEY is missing');
+  }
+  
+  const client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
+  let uploadedFileId: string | null = null;
   
   try {
-    return decodeURIComponent(textRun.T) + ' ';
-  } catch {
-    // Fallback for malformed URI components
-    return textRun.T + ' ';
-  }
-}
-
-function extractPageText(page: PDFPage, pageIndex: number): string {
-  if (!page.Texts || !Array.isArray(page.Texts)) {
-    return '';
-  }
-
-  let pageText = '';
-  
-  for (const textBlock of page.Texts) {
-    if (!textBlock.R || !Array.isArray(textBlock.R)) continue;
+    const uploadRes = await client.files.upload({
+      file: { fileName: "document.pdf", content: fileBuffer },
+      purpose: "ocr"
+    });
     
-    for (const textRun of textBlock.R) {
-      pageText += decodeAndExtractText(textRun);
-    }
-  }
-
-  return pageText.trim() 
-    ? `Page ${pageIndex + 1}:\n${pageText.trim()}\n\n`
-    : '';
-}
-
-function processPDFData(pdfData: PDFData): string {
-  if (!pdfData.Pages || !Array.isArray(pdfData.Pages)) {
-    return TEXT_PROCESSING_CONFIG.PDF_PROCESSING.FALLBACK_MESSAGE;
-  }
-
-  let extractedText = '';
-  
-  for (let i = 0; i < pdfData.Pages.length; i++) {
-    extractedText += extractPageText(pdfData.Pages[i], i);
-  }
-
-  return extractedText.trim() || TEXT_PROCESSING_CONFIG.PDF_PROCESSING.FALLBACK_MESSAGE;
-}
-
-function setupPDFParser(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    try {
-      const PDFParser = require('pdf2json');
-      const pdfParser = new PDFParser();
-      
-      // Just return the parser instance, don't set up event handlers here
-      resolve(pdfParser);
-    } catch (error) {
-      console.error(LOG_MESSAGES.PDF_EXTRACTION_SETUP_ERROR, error);
-      reject(createPDFError(ERROR_MESSAGES.PDF_EXTRACTION_FAILED, error));
-    }
-  });
-}
-
-// Core Functions
-async function extractPDFText(fileBuffer: Buffer): Promise<string> {
-  const pdfParser = await setupPDFParser();
-  
-  return new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      reject(new Error('PDF parsing timeout'));
-    }, 30000); // 30 second timeout
-
-    pdfParser.on('pdfParser_dataReady', (pdfData: PDFData) => {
-      clearTimeout(timeoutId);
-      try {
-        console.log(`${LOG_MESSAGES.PDF_PARSED_SUCCESS} ${pdfData.Pages?.length || 0}`);
-        const extractedText = processPDFData(pdfData);
-        console.log(`${LOG_MESSAGES.TEXT_LENGTH} ${extractedText.length} ${LOG_MESSAGES.TEXT_CHARACTERS}`);
-        resolve(extractedText);
-      } catch (processingError) {
-        console.error(LOG_MESSAGES.PDF_PROCESSING_ERROR, processingError);
-        reject(createPDFError(ERROR_MESSAGES.PDF_PROCESSING_FAILED, processingError));
+    uploadedFileId = uploadRes.id;
+    
+    const signedUrlRes = await client.files.getSignedUrl({ fileId: uploadedFileId });
+    
+    const ocrRes = await client.ocr.process({
+      model: "mistral-ocr-latest",
+      document: { type: "document_url", documentUrl: signedUrlRes.url }
+    });
+    
+    let extractedText = "";
+    if (ocrRes.pages && Array.isArray(ocrRes.pages)) {
+      for (const page of ocrRes.pages) {
+        if (page.markdown) {
+          extractedText += page.markdown + "\n\n";
+        }
       }
-    });
-
-    pdfParser.on('pdfParser_dataError', (error: any) => {
-      clearTimeout(timeoutId);
-      reject(error);
-    });
-
-    try {
-      pdfParser.parseBuffer(fileBuffer);
-    } catch (error) {
-      clearTimeout(timeoutId);
-      reject(createPDFError(ERROR_MESSAGES.PDF_EXTRACTION_FAILED, error));
     }
-  });
+    
+    return extractedText.trim() || TEXT_PROCESSING_CONFIG.PDF_PROCESSING.FALLBACK_MESSAGE;
+  } catch (error) {
+    console.error(LOG_MESSAGES.PDF_PROCESSING_ERROR, error);
+    throw createPDFError(ERROR_MESSAGES.PDF_EXTRACTION_FAILED, error);
+  } finally {
+    if (uploadedFileId) {
+      try {
+        await client.files.delete({ fileId: uploadedFileId });
+      } catch (e) {
+        console.error("Failed to delete mistral file:", e);
+      }
+    }
+  }
 }
 
 async function extractDOCXText(fileBuffer: Buffer): Promise<string> {

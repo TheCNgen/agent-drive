@@ -1,7 +1,7 @@
 import { authOptions } from '@/app/lib/backend/authConfig';
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
-import { deleteFileByUrl } from '@/app/lib/gcs';
+import { deleteFileByUrl, generatePresignedReadUrl, extractKeyFromUrl } from '@/app/lib/gcs';
 import { AIChunk } from '@/app/models/AIChunk';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
@@ -30,8 +30,21 @@ export async function GET(
     if (!item) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
+    
+    // Transform URL to presigned URL if it is from GCS
+    const itemObj = item.toObject();
+    if (itemObj.url && itemObj.url.includes('storage.googleapis.com')) {
+      const key = extractKeyFromUrl(itemObj.url);
+      if (key) {
+        try {
+          itemObj.url = await generatePresignedReadUrl(key);
+        } catch (e) {
+          console.error('Failed to presign url for', key, e);
+        }
+      }
+    }
 
-    return NextResponse.json(item);
+    return NextResponse.json(itemObj);
 
   } catch (error: any) {
     console.error('GET /api/items/[id] error:', error);

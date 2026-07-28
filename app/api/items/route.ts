@@ -1,8 +1,9 @@
-import { processFileForAI } from '@/app/lib/ai/aiService';
 import { authOptions } from '@/app/lib/backend/authConfig';
+import { processFileForAI } from '@/app/lib/ai/aiService';
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
-import { cleanupOrphanedFile, uploadFile } from '@/app/lib/gcs';
+import { cleanupOrphanedFile, uploadFile, generatePresignedReadUrl, extractKeyFromUrl } from '@/app/lib/gcs';
+import { submitHCSRecord } from '@/app/lib/hedera';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
@@ -28,7 +29,23 @@ export async function GET(request: Request) {
       : { _id: session.user.rootFolder };
 
     if (!parentId) {
-      const items = await Item.find(query);
+      let items = await Item.find(query).lean();
+      
+      // Transform URLs to presigned URLs if they are from GCS
+      items = await Promise.all(items.map(async (item: any) => {
+        if (item.url && item.url.includes('storage.googleapis.com')) {
+          const key = extractKeyFromUrl(item.url);
+          if (key) {
+            try {
+              item.url = await generatePresignedReadUrl(key);
+            } catch (e) {
+              console.error('Failed to presign url for', key, e);
+            }
+          }
+        }
+        return item;
+      }));
+
       return NextResponse.json({
         items,
         pagination: {
@@ -65,10 +82,25 @@ export async function GET(request: Request) {
       owner: session.user.id
     });
 
-    const items = await Item.find(query)
+    let items = await Item.find(query)
       .sort({ createdAt: -1, _id: -1 })
       .limit(limit)
       .lean();
+
+    // Transform URLs to presigned URLs if they are from GCS
+    items = await Promise.all(items.map(async (item: any) => {
+      if (item.url && item.url.includes('storage.googleapis.com')) {
+        const key = extractKeyFromUrl(item.url);
+        if (key) {
+          try {
+            item.url = await generatePresignedReadUrl(key);
+          } catch (e) {
+            console.error('Failed to presign url for', key, e);
+          }
+        }
+      }
+      return item;
+    }));
 
     const totalPages = Math.ceil(totalItems / limit);
     const hasNextPage = items.length === limit;
@@ -202,6 +234,14 @@ export async function POST(request: NextRequest) {
               }
             }, 1000); // 1 second delay
           }
+          
+          // Submit HCS record asynchronously
+          submitHCSRecord('ITEM_CREATED', {
+            itemId: itemId,
+            name: item.name,
+            owner: item.owner.toString(),
+            type: item.type
+          });
 
           return response;
 

@@ -32,21 +32,22 @@ test.describe('Phase 1: Storage (GCS)', () => {
     // We'll wait for network idle to ensure dashboard is loaded
     await page.waitForLoadState('networkidle');
 
-    // Often there's a visible file input or an upload button that triggers it.
-    // Let's just attach to the first input type file.
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    // Click on something that says "Upload"
+    // Click on the Upload button in the FileExplorer to open the modal
     await page.click('button:has-text("Upload")');
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(testFilePath);
+    
+    // Wait for the file input in the modal to appear and set the file
+    await page.setInputFiles('input[type="file"]', testFilePath);
+    
+    // Click the submit "Upload" button inside the modal
+    await page.click('.fixed button:has-text("Upload")');
 
     // Wait for it to appear in the UI.
-    // Usually there's a row containing the file name
-    const fileRow = page.locator(`tr:has-text("${testFileName}")`);
-    await expect(fileRow).toBeVisible({ timeout: 15000 });
+    // Usually there's a div containing the file name
+    const fileItem = page.getByText(testFileName, { exact: true });
+    await expect(fileItem).toBeVisible({ timeout: 15000 });
 
     // 2. Check GCS bucket using gcloud CLI
-    const gcloudLs = execSync(`gcloud storage ls gs://${bucketName}/uploads/`).toString();
+    const gcloudLs = execSync(`gcloud storage ls -r gs://${bucketName}/uploads/`).toString();
     // gcloud ls should show the file in the bucket
     expect(gcloudLs).toContain(testFileName);
     
@@ -57,7 +58,7 @@ test.describe('Phase 1: Storage (GCS)', () => {
 
     // 3. Download
     // Click on the file item to open the FileViewerModal
-    await fileRow.click();
+    await fileItem.click();
     
     // In the FileViewerModal, our file is a text file, so it should render in an iframe
     const iframe = page.locator('iframe');
@@ -80,9 +81,9 @@ test.describe('Phase 1: Storage (GCS)', () => {
 
     // 4. Delete
     // Hover to show buttons
-    await fileRow.hover();
+    await fileItem.hover();
     // Click delete button
-    await fileRow.locator('button[title^="Delete"]').click();
+    await page.locator(`button[title^="Delete ${testFileName}"]`).click();
     
     // Wait for confirmation if there is one
     const confirmButton = page.locator('button:has-text("Confirm"), button:has-text("Yes")');
@@ -91,10 +92,10 @@ test.describe('Phase 1: Storage (GCS)', () => {
     }
 
     // Wait for it to disappear
-    await expect(fileRow).toBeHidden();
+    await expect(fileItem).toBeHidden();
 
     // 5. Confirm deletion with gcloud CLI
-    const gcloudLsAfter = execSync(`gcloud storage ls gs://${bucketName}/uploads/ || true`).toString();
+    const gcloudLsAfter = execSync(`gcloud storage ls -r gs://${bucketName}/uploads/ || true`).toString();
     expect(gcloudLsAfter).not.toContain(testFileName);
   });
 });

@@ -1,4 +1,5 @@
 import { Item, Listing } from '@/app/lib/models';
+import { submitHCSRecord } from '@/app/lib/hedera';
 import {
   handlePaginatedRequest,
   validateMonetizedContent,
@@ -111,6 +112,13 @@ export async function POST(request: NextRequest) {
         listing[0].populate({ path: 'item', select: 'name type size mimeType url', options: { session } }),
         listing[0].populate({ path: 'seller', select: 'name wallet', options: { session } })
       ]);
+      
+      submitHCSRecord('LISTING_CREATED', {
+        listingId: listing[0]._id.toString(),
+        itemId: listing[0].item._id.toString(),
+        seller: listing[0].seller._id.toString(),
+        price: listing[0].price
+      });
       
       return NextResponse.json(listing[0], { status: 201 });
     });
