@@ -11,7 +11,7 @@ export interface IAffiliate extends Document {
   commissionRate: number;
   affiliateCode: string;
   status: "active" | "inactive" | "suspended";
-  totalEarnings: number;
+  totalEarnings: string;
   totalSales: number;
   createdAt: Date;
   updatedAt: Date;
@@ -59,9 +59,8 @@ const affiliateSchema = new Schema<IAffiliate>({
     default: "active",
   },
   totalEarnings: {
-    type: Number,
-    default: 0,
-    min: 0,
+    type: String,
+    default: "0",
   },
   totalSales: {
     type: Number,

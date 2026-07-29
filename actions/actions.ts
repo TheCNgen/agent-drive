@@ -49,7 +49,7 @@ export async function purchaseFromMarketplace(wallet: string, id: string, affili
 
   const sellerAmount = price - platformFee - affiliateFee;
   
-  const platformAccount = process.env.HEDERA_PLATFORM_FEE_ACCOUNT;
+  const platformAccount = process.env.PLATFORM_TREASURY_ACCOUNT_ID;
   if (!platformAccount) throw new Error("Platform fee account not configured");
 
   // Create Hedera transaction
@@ -57,12 +57,7 @@ export async function purchaseFromMarketplace(wallet: string, id: string, affili
   
   let tx = new TransferTransaction()
     .addHbarTransfer(buyerUser.accountId, new Hbar(-price))
-    .addHbarTransfer(platformAccount, new Hbar(platformFee))
-    .addHbarTransfer(sellerUser.accountId, new Hbar(sellerAmount));
-    
-  if (affiliateUser) {
-    tx = tx.addHbarTransfer(affiliateUser.accountId, new Hbar(affiliateFee));
-  }
+    .addHbarTransfer(platformAccount, new Hbar(price));
   
   const txResponse = await tx.execute(client);
   const receipt = await txResponse.getReceipt(client);
@@ -127,7 +122,7 @@ export async function purchaseMonetizedLink(wallet: string, id: string) {
   const platformFee = (price * PLATFORM_FEE_PERCENTAGE) / 100;
   const sellerAmount = price - platformFee;
   
-  const platformAccount = process.env.HEDERA_PLATFORM_FEE_ACCOUNT;
+  const platformAccount = process.env.PLATFORM_TREASURY_ACCOUNT_ID;
   if (!platformAccount) throw new Error("Platform fee account not configured");
 
   // Create Hedera transaction
@@ -135,8 +130,7 @@ export async function purchaseMonetizedLink(wallet: string, id: string) {
   
   const tx = new TransferTransaction()
     .addHbarTransfer(buyerUser.accountId, new Hbar(-price))
-    .addHbarTransfer(platformAccount, new Hbar(platformFee))
-    .addHbarTransfer(sellerUser.accountId, new Hbar(sellerAmount));
+    .addHbarTransfer(platformAccount, new Hbar(price));
     
   const txResponse = await tx.execute(client);
   const receipt = await txResponse.getReceipt(client);

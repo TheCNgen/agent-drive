@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
               { path: 'seller', select: 'name email' }
             ]
           })
-          .populate('commissionTransaction', 'amount status metadata purchaseDate')
+          .populate('commissionTransaction', 'amountTinybars status metadata purchaseDate')
           .sort({ createdAt: -1 })
           .session(dbSession),
 
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
           {
             $group: {
               _id: '$status',
-              totalAmount: { $sum: '$amount' },
+              totalAmountTinybars: { $sum: { $toLong: '$amountTinybars' } },
               count: { $sum: 1 }
             }
           }
@@ -98,9 +98,9 @@ export async function GET(request: NextRequest) {
       const filteredCommissionRecords = commissionRecords.filter(c => c.affiliate?.affiliateUser);
 
       // Calculate totals by status
-      const pendingTotal = totals.find(t => t._id === 'pending')?.totalAmount || 0;
-      const paidTotal = totals.find(t => t._id === 'completed')?.totalAmount || 0;
-      const failedTotal = totals.find(t => t._id === 'failed')?.totalAmount || 0;
+      const pendingTotalTinybars = totals.find(t => t._id === 'pending')?.totalAmountTinybars?.toString() || "0";
+      const paidTotalTinybars = totals.find(t => t._id === 'completed')?.totalAmountTinybars?.toString() || "0";
+      const failedTotalTinybars = totals.find(t => t._id === 'failed')?.totalAmountTinybars?.toString() || "0";
 
       const pendingCount = totals.find(t => t._id === 'pending')?.count || 0;
       const paidCount = totals.find(t => t._id === 'completed')?.count || 0;
@@ -111,10 +111,10 @@ export async function GET(request: NextRequest) {
           transactions: commissionTransactions,
           records: filteredCommissionRecords,
           summary: {
-            totalPending: pendingTotal,
-            totalPaid: paidTotal,
-            totalFailed: failedTotal,
-            totalEarnings: paidTotal,
+            totalPendingTinybars: pendingTotalTinybars,
+            totalPaidTinybars: paidTotalTinybars,
+            totalFailedTinybars: failedTotalTinybars,
+            totalEarningsTinybars: paidTotalTinybars,
             pendingCount,
             paidCount,
             failedCount,

@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { formatHbar, hashscanTx } from '../money';
 import {
   CreateListingOptions,
   Listing,
@@ -97,14 +98,7 @@ export function getListingStatusColor(status: string): string {
   return colorMap[status] || colorMap.default;
 }
 
-export function formatListingPrice(price: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(price);
-}
+// Format listing price was deleted, please import formatHbar from app/lib/money.ts
 
 export function formatListingDate(date: Date | string): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -159,7 +153,7 @@ export const getFileIcon = (mime?: string): IconType => {
   return FaFile;
 };
 
-export async function purchaseListing(listingId: string, wallet:`0x${string}`, affiliateCode?: string): Promise<any> {
+export async function purchaseListing(listingId: string, affiliateCode?: string): Promise<any> {
   try {
     const res = await axios.post(`/api/listings/${listingId}/purchase`, { affiliateCode });
     if (!res || res.status !== 201) {
@@ -279,37 +273,18 @@ export async function getAvailableTags(): Promise<string[]> {
 }
 
 // Blockchain utility functions
-export function formatBlockchainAddress(address: string): string {
-  if (!address) return '';
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+export function formatHederaAccount(id: string): string {
+  if (!id) return '';
+  return id;
 }
 
 export function formatTransactionHash(hash: string): string {
   if (!hash) return '';
-  return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
+  return hash;
 }
 
-export function getBlockExplorerUrl(network: string, txHash: string): string {
-  const baseUrls: { [key: string]: string } = {
-    'base-sepolia': 'https://sepolia.basescan.org/tx/',
-    'base': 'https://basescan.org/tx/',
-    'ethereum': 'https://etherscan.io/tx/',
-    'sepolia': 'https://sepolia.etherscan.io/tx/',
-  };
-  
-  const baseUrl = baseUrls[network] || baseUrls['base-sepolia'];
-  return `${baseUrl}${txHash}`;
-}
-
-export function getNetworkDisplayName(network: string): string {
-  const networkNames: { [key: string]: string } = {
-    'base-sepolia': 'Base Sepolia',
-    'base': 'Base',
-    'ethereum': 'Ethereum',
-    'sepolia': 'Sepolia',
-  };
-  
-  return networkNames[network] || network.charAt(0).toUpperCase() + network.slice(1);
+export function getNetworkDisplayName(network?: string): string {
+  return 'Hedera Testnet';
 }
 
 export function copyToClipboard(text: string, successMessage: string = 'Copied to clipboard!'): void {

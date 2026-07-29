@@ -1,6 +1,7 @@
 'use client';
 
 import { createListing } from '@/app/lib/frontend/marketplaceFunctions';
+import { hbarToTinybars } from '@/app/lib/money';
 import { CreateListingOptions, Item } from '@/app/lib/types';
 import React, { useState } from 'react';
 
@@ -51,8 +52,10 @@ export default function CreateListingModal({
     setError(null);
 
     try {
-      const price = parseFloat(formData.price);
-      if (isNaN(price) || price <= 0) {
+      let priceTinybars: string;
+      try {
+        priceTinybars = hbarToTinybars(formData.price);
+      } catch (e) {
         throw new Error('Please enter a valid price greater than 0');
       }
 
@@ -65,7 +68,7 @@ export default function CreateListingModal({
         itemId: selectedItem._id,
         title: formData.title.trim(),
         description: formData.description.trim(),
-        price,
+        priceTinybars,
         tags: tags.length > 0 ? tags : undefined,
         affiliateEnabled: formData.affiliateEnabled,
         defaultCommissionRate: formData.affiliateEnabled ? formData.defaultCommissionRate : 0
@@ -161,7 +164,7 @@ export default function CreateListingModal({
             </div>
 
             <div>
-              <label className="font-freeman block mb-2">Price (USD) *</label>
+              <label className="font-freeman block mb-2">Price (HBAR) *</label>
               <div className="relative">
                 <input
                   type="number"
@@ -169,9 +172,9 @@ export default function CreateListingModal({
                   value={formData.price}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 bg-white border-2 border-black font-freeman focus:outline-none focus:border-primary brutal-shadow-center"
-                  placeholder="0.00"
-                  min="0.01"
-                  step="0.01"
+                  placeholder="0.00000000"
+                  min="0.00000001"
+                  step="0.00000001"
                   required
                 />
               </div>

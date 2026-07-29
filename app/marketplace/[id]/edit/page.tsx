@@ -3,6 +3,7 @@
 import FooterPattern from '@/app/components/global/FooterPattern';
 import Loader from '@/app/components/global/Loader';
 import { getListing, updateListing } from '@/app/lib/frontend/marketplaceFunctions';
+import { formatHbar, hbarToTinybars } from '@/app/lib/money';
 import { Listing, UpdateListingOptions } from '@/app/lib/types';
 import loadericon from '@/assets/loader_2.svg';
 import { useSession } from 'next-auth/react';
@@ -40,7 +41,7 @@ export default function EditListingPage() {
       setFormData({
         title: data.title,
         description: data.description,
-        price: data.price.toString(),
+        price: formatHbar(data.priceTinybars),
         status: data.status,
         tags: data.tags.join(', ')
       });
@@ -60,8 +61,10 @@ export default function EditListingPage() {
     setError(null);
 
     try {
-      const price = parseFloat(formData.price);
-      if (isNaN(price) || price <= 0) {
+      let priceTinybars: string;
+      try {
+        priceTinybars = hbarToTinybars(formData.price);
+      } catch (e) {
         throw new Error('Please enter a valid price greater than 0');
       }
 
@@ -73,7 +76,7 @@ export default function EditListingPage() {
       const updateData: UpdateListingOptions = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        price,
+        priceTinybars,
         status: formData.status,
         tags: tags.length > 0 ? tags : []
       };
@@ -234,11 +237,11 @@ export default function EditListingPage() {
 
               <div>
                 <label htmlFor="price" className="font-freeman block mb-2">
-                  Price (USD) *
+                  Price (HBAR) *
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="font-freeman">$</span>
+                    <span className="font-freeman">ℏ</span>
                   </div>
                   <input
                     type="number"
@@ -247,8 +250,8 @@ export default function EditListingPage() {
                     value={formData.price}
                     onChange={handleInputChange}
                     required
-                    min="0.01"
-                    step="0.01"
+                    min="0.00000001"
+                    step="0.00000001"
                     className="w-full pl-7 pr-3 py-2 bg-white border-2 border-black font-freeman focus:outline-none focus:border-primary brutal-shadow-center"
                   />
                 </div>

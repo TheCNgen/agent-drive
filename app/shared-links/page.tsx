@@ -149,7 +149,7 @@ export default function SharedLinksPage() {
                     title: link.title,
                     description: link.description,
                     type: link?.type,
-                    price: link.price,
+                    priceTinybars: link.priceTinybars,
                     item: link.item,
                     accessCount: link.accessCount,
                     paidUsers: link.paidUsers,

@@ -5,7 +5,8 @@ import FooterPattern from '@/app/components/global/FooterPattern';
 import Loader from '@/app/components/global/Loader';
 import { formatFileSize, getFileIcon } from '@/app/lib/frontend/explorerFunctions';
 import { deleteListing, getListing } from '@/app/lib/frontend/marketplaceFunctions';
-import { formatDate, formatPrice } from '@/app/lib/frontend/monetizedContentUtils';
+import { formatDate } from '@/app/lib/frontend/monetizedContentUtils';
+import { formatHbar } from '@/app/lib/money';
 import { purchaseListing } from '@/app/lib/frontend/transactionFunctions';
 import { Listing } from '@/app/lib/types';
 import { useSession } from 'next-auth/react';
@@ -99,7 +100,7 @@ export default function ListingDetailPage() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to purchase "${listing?.title}" for ${formatPrice(listing?.price || 0)}?`)) {
+    if (!confirm(`Are you sure you want to purchase "${listing?.title}" for ${formatHbar(listing?.priceTinybars || '0')}?`)) {
       return;
     }
 
@@ -124,7 +125,7 @@ export default function ListingDetailPage() {
       // Create detailed success message with blockchain info
       let successMessage = `🎉 Purchase Successful!\n\n`;
       successMessage += `📄 Item: ${transaction.item.name}\n`;
-      successMessage += `💰 Amount: ${formatPrice(transaction.amount)}\n`;
+      successMessage += `💰 Amount: ${formatHbar(transaction.amountTinybars)}\n`;
       successMessage += `📋 Receipt: ${transaction.receiptNumber}\n`;
 
       if (copiedItem?.path) {
@@ -287,7 +288,7 @@ export default function ListingDetailPage() {
                   {listing.status.toUpperCase()}
                 </span>
                 <span className="text-2xl font-freeman">
-                  {formatPrice(listing.price)}
+                  {formatHbar(listing.priceTinybars)}
                 </span>
               </div>
             </div>
@@ -368,7 +369,7 @@ export default function ListingDetailPage() {
                       disabled={purchaseLoading}
                       className="button-primary bg-primary w-full py-3 px-4 text-sm font-freeman"
                     >
-                      {purchaseLoading ? 'Processing Purchase...' : `Purchase for ${formatPrice(listing.price)}`}
+                      {purchaseLoading ? 'Processing Purchase...' : `Purchase for ${formatHbar(listing.priceTinybars)}`}
                     </button>
                   )}
 

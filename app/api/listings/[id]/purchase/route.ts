@@ -116,22 +116,22 @@ export async function POST(
       return NextResponse.json({ error: 'You have already purchased this item' }, { status: 400 });
     }
 
-    const price = listing.price;
-    const platformFee = (price * PLATFORM_FEE_PERCENTAGE) / 100;
-    let affiliateFee = 0;
+    const priceTinybars = BigInt(listing.priceTinybars);
+    const platformFee = (priceTinybars * BigInt(PLATFORM_FEE_PERCENTAGE)) / BigInt(100);
+    let affiliateFee = BigInt(0);
     let affiliateUser = null;
     let affiliateRecord = null;
     
     if (affiliateCodeFromHeader && listing.affiliateEnabled) {
       affiliateRecord = await Affiliate.findOne({ affiliateCode: affiliateCodeFromHeader, listing: id, status: 'active' }).populate('affiliateUser');
       if (affiliateRecord && affiliateRecord.affiliateUser && affiliateRecord.affiliateUser.accountId && affiliateRecord.affiliateUser._id.toString() !== userIdFromHeader) {
-        affiliateFee = (price * affiliateRecord.commissionRate) / 100;
+        affiliateFee = (priceTinybars * BigInt(affiliateRecord.commissionRate)) / BigInt(100);
         affiliateUser = affiliateRecord.affiliateUser;
       }
     }
 
-    const sellerAmount = price - platformFee - affiliateFee;
-    const platformAccount = process.env.HEDERA_PLATFORM_FEE_ACCOUNT;
+    const sellerAmount = priceTinybars - platformFee - affiliateFee;
+    const platformAccount = process.env.PLATFORM_TREASURY_ACCOUNT_ID;
     if (!platformAccount) {
       return NextResponse.json({ error: 'Platform fee account not configured' }, { status: 500 });
     }
@@ -148,13 +148,8 @@ export async function POST(
     client.setOperator(buyerUser.accountId, buyerUser.privateKey);
 
     let tx = new TransferTransaction()
-      .addHbarTransfer(buyerUser.accountId, new Hbar(-price))
-      .addHbarTransfer(platformAccount, new Hbar(platformFee))
-      .addHbarTransfer(sellerUser.accountId, new Hbar(sellerAmount));
-      
-    if (affiliateUser) {
-      tx = tx.addHbarTransfer(affiliateUser.accountId, new Hbar(affiliateFee));
-    }
+      .addHbarTransfer(buyerUser.accountId, Hbar.fromTinybars((-priceTinybars).toString()))
+      .addHbarTransfer(platformAccount, Hbar.fromTinybars(priceTinybars.toString()));
     
     const txResponse = await tx.execute(client);
     const receipt = await txResponse.getReceipt(client);
@@ -170,7 +165,7 @@ export async function POST(
       buyer: userIdFromHeader,
       seller: listing.seller._id,
       item: listing.item._id,
-      amount: listing.price,
+      amountTinybars: listing.priceTinybars,
       status: 'completed',
       transactionId: blockchainTransactionId,
       receiptNumber: generateReceiptNumber(),
@@ -207,7 +202,7 @@ export async function POST(
           buyer: listing.seller._id, // platform/original seller pays
           seller: affiliateUser._id, // affiliate receives
           item: listing.item._id,
-          amount: affiliateFee,
+          amountTinybars: affiliateFee.toString(),
           status: 'completed', // completed immediately via Hedera
           transactionId: uuidv4(),
           receiptNumber: generateReceiptNumber(),
@@ -218,7 +213,7 @@ export async function POST(
           metadata: {
             affiliateCode: affiliateCodeFromHeader,
             commissionRate: affiliateRecord.commissionRate,
-            originalPurchaseAmount: listing.price,
+            originalPurchaseAmount: listing.priceTinybars,
             originalBuyer: userIdFromHeader
           }
         });
@@ -229,7 +224,7 @@ export async function POST(
           buyer: listing.seller._id, // platform/original seller pays (self-transaction for accounting)
           seller: listing.seller._id, // original seller receives
           item: listing.item._id,
-          amount: sellerAmount,
+          amountTinybars: sellerAmount.toString(),
           status: 'completed', // completed immediately via Hedera
           transactionId: uuidv4(),
           receiptNumber: generateReceiptNumber(),
@@ -239,8 +234,8 @@ export async function POST(
           parentTransaction: transaction._id,
           metadata: {
             isAffiliateDistribution: true,
-            originalPurchaseAmount: listing.price,
-            commissionDeducted: affiliateFee,
+            originalPurchaseAmount: listing.priceTinybars,
+            commissionDeducted: affiliateFee.toString(),
             originalBuyer: userIdFromHeader
           }
         });
@@ -248,11 +243,11 @@ export async function POST(
         await Transaction.findByIdAndUpdate(transaction._id, {
           affiliateInfo: {
             isAffiliateSale: true,
-            originalAmount: listing.price,
-            netAmount: sellerAmount,
+            originalAmountTinybars: listing.priceTinybars,
+            netAmountTinybars: sellerAmount.toString(),
             commissionDistribution: [{
               affiliateId: affiliateRecord._id,
-              amount: affiliateFee,
+              amountTinybars: affiliateFee.toString(),
               commissionRate: affiliateRecord.commissionRate
             }]
           }
@@ -264,16 +259,26 @@ export async function POST(
             originalTransaction: transaction._id,
             commissionTransaction: commissionTransaction._id,
             commissionRate: affiliateRecord.commissionRate,
-            commissionAmount: affiliateFee,
+            commissionAmountTinybars: affiliateFee.toString(),
             status: 'completed'
           }),
           Affiliate.findByIdAndUpdate(affiliateRecord._id, {
             $inc: { 
-              totalEarnings: affiliateFee,
               totalSales: 1
             }
           })
         ]);
+        
+        // Handle earnings calculation directly without relying on $inc for BigInt
+        const affiliateObj = await Affiliate.findById(affiliateRecord._id);
+        if (affiliateObj) {
+          const currentEarnings = affiliateObj.totalEarnings || "0";
+          const newEarnings = (BigInt(currentEarnings) + affiliateFee).toString();
+          await Affiliate.findByIdAndUpdate(affiliateRecord._id, {
+             totalEarnings: newEarnings
+          });
+        }
+
       } catch (affiliateError) {
         console.error('Error processing affiliate commission:', affiliateError);
       }
@@ -285,7 +290,7 @@ export async function POST(
       buyer: userIdFromHeader,
       seller: listing.seller._id.toString(),
       item: listing.item._id.toString(),
-      amount: listing.price
+      amountTinybars: listing.priceTinybars
     });
 
     return NextResponse.json({
@@ -296,7 +301,7 @@ export async function POST(
         message: 'Purchase completed successfully',
         affiliateCommission: commission ? {
           commission: commission,
-          amount: commission.commissionAmount,
+          amountTinybars: commission.commissionAmountTinybars,
           rate: commission.commissionRate,
           commissionTransaction: commissionTransaction,
           sellerTransaction: sellerTransaction

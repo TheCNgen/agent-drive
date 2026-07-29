@@ -1,7 +1,7 @@
 'use client';
 
 import { getFileIcon as getExplorerFileIcon } from '@/app/lib/frontend/explorerFunctions';
-import { formatListingPrice } from '@/app/lib/frontend/marketplaceFunctions';
+import { formatHbar } from '@/app/lib/money';
 import { formatTransactionDate, getNetworkDisplayName, getTransactionStatusColor, getTransactionTypeColor } from '@/app/lib/frontend/transactionFunctions';
 import { Transaction } from '@/app/lib/types';
 import { useSession } from 'next-auth/react';
@@ -255,17 +255,17 @@ export default function TransactionsPage() {
                                session?.user?.id === transaction.seller._id ? (
                                 <>
                                   <p className="text-xl font-freeman">
-                                    {formatListingPrice(transaction.affiliateInfo.netAmount)}
+                                    {formatHbar(transaction.affiliateInfo.netAmountTinybars)}
                                   </p>
                                   <p className="text-sm text-gray-500">
-                                    -{formatListingPrice(transaction.affiliateInfo.originalAmount - transaction.affiliateInfo.netAmount)} commission
+                                    -{formatHbar((BigInt(transaction.affiliateInfo.originalAmountTinybars) - BigInt(transaction.affiliateInfo.netAmountTinybars)).toString())} commission
                                   </p>
                                 </>
                               ) : 
                               transaction.transactionType === 'commission' ? (
                                 <>
                                   <p className="text-xl font-freeman">
-                                    {formatListingPrice(transaction.amount)}
+                                    {formatHbar(transaction.amountTinybars)}
                                   </p>
                                   <p className="text-sm text-gray-500">
                                     Commission
@@ -273,7 +273,7 @@ export default function TransactionsPage() {
                                 </>
                               ) : (
                                 <p className="text-xl font-freeman">
-                                  {formatListingPrice(transaction.amount)}
+                                  {formatHbar(transaction.amountTinybars)}
                                 </p>
                               )}
                               <p className="text-sm font-freeman text-gray-500">

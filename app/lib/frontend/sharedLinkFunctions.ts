@@ -18,7 +18,7 @@ export interface SharedLink {
   };
   linkId: string;
   type: "public" | "monetized";
-  price?: number;
+  priceTinybars?: string;
   title: string;
   description?: string;
   isActive: boolean;
@@ -67,7 +67,7 @@ export async function createSharedLink(data: {
   type: "public" | "monetized";
   title: string;
   description?: string;
-  price?: number;
+  priceTinybars?: string;
   expiresAt?: Date;
 }): Promise<SharedLink> {
   const response = await fetch(API_BASE, {
@@ -112,10 +112,9 @@ export async function addSharedItemToDrive(linkId: string): Promise<{
 
 export async function payForSharedLink(
   linkId: string,
-  wallet: `0x${string}`,
 ): Promise<any> {
   try {
-    const response = await axios.post(`/api/shared-links/${linkId}/purchase`, { wallet });
+    const response = await axios.post(`/api/shared-links/${linkId}/purchase`, {});
     if (!response || response.status !== 201) {
       throw new Error("Purchase failed - Invalid response");
     }
@@ -142,9 +141,7 @@ export function formatFileSize(bytes?: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${FILE_SIZES[i]}`;
 }
 
-export function formatPrice(price?: number): string {
-  return price ? `$${price.toFixed(2)}` : "$0.00";
-}
+// formatPrice removed, use formatHbar from app/lib/money.ts
 
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("en-US", {

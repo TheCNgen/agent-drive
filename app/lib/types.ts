@@ -89,7 +89,7 @@ export interface Listing {
   seller: User;
   title: string;
   description: string;
-  price: number;
+  priceTinybars: string;
   status: 'active' | 'inactive';
   tags: string[];
   views: number;
@@ -103,7 +103,7 @@ export interface CreateListingOptions {
   itemId: string;
   title: string;
   description: string;
-  price: number;
+  priceTinybars: string;
   tags?: string[];
   affiliateEnabled?: boolean;
   defaultCommissionRate?: number;
@@ -112,7 +112,7 @@ export interface CreateListingOptions {
 export interface UpdateListingOptions {
   title?: string;
   description?: string;
-  price?: number;
+  priceTinybars?: string;
   status?: 'active' | 'inactive';
   tags?: string[];
   affiliateEnabled?: boolean;
@@ -138,7 +138,7 @@ export interface Affiliate {
   commissionRate: number;
   affiliateCode: string;
   status: 'active' | 'inactive' | 'suspended';
-  totalEarnings: number;
+  totalEarnings: string;
   totalSales: number;
   createdAt: Date;
   updatedAt: Date;
@@ -151,7 +151,7 @@ export interface Transaction {
   buyer: User;
   seller: User;
   item: Item;
-  amount: number;
+  amountTinybars: string;
   status: 'completed' | 'pending' | 'failed' | 'refunded';
   transactionId: string;
   receiptNumber: string;
@@ -160,12 +160,12 @@ export interface Transaction {
   paymentFlow: 'direct' | 'admin';
   affiliateInfo?: {
     isAffiliateSale: boolean;
-    originalAmount: number;
-    netAmount: number;
+    originalAmountTinybars: string;
+    netAmountTinybars: string;
     commissionDistribution: {
       affiliateId: string;
       affiliate?: Affiliate;
-      amount: number;
+      amountTinybars: string;
       commissionRate: number;
     }[];
   };
@@ -187,7 +187,7 @@ export interface Commission {
   affiliate: Affiliate;
   originalTransaction: Transaction;
   commissionTransaction?: Transaction;
-  commissionAmount: number;
+  commissionAmountTinybars: string;
   commissionRate: number;
   status: 'pending' | 'paid' | 'failed';
   paymentFlow: 'direct' | 'admin';
@@ -203,7 +203,7 @@ export interface SharedLink {
   owner: User;
   linkId: string;
   type: 'public' | 'monetized';
-  price?: number;
+  priceTinybars?: string;
   title: string;
   description?: string;
   isActive: boolean;

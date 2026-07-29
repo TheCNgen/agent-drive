@@ -72,17 +72,15 @@ export async function POST(request: NextRequest) {
     const userId = await withAuthCheck(request);
     
     const body = await request.json();
-    const { itemId, title, description, price, tags, affiliateEnabled } = body;
+    const { itemId, title, description, priceTinybars, tags, affiliateEnabled } = body;
     
-    if (!itemId || !title || !description || !price) {
+    if (!itemId || !title || !description || !priceTinybars) {
       throw new Error('Item ID, title, description, and price are required');
     }
     
-    validateMonetizedContent({
-      type: 'monetized',
-      price,
-      paidUsers: []
-    });
+    if (!/^[1-9][0-9]*$/.test(priceTinybars)) {
+      throw new Error('Invalid price format');
+    }
     
     return await withTransaction(async (session) => {
       const [item, existingListing] = await Promise.all([
@@ -103,7 +101,7 @@ export async function POST(request: NextRequest) {
         seller: userId,
         title,
         description,
-        price,
+        priceTinybars,
         tags: Array.isArray(tags) ? tags : [],
         affiliateEnabled: affiliateEnabled || false
       }], { session });
@@ -117,7 +115,7 @@ export async function POST(request: NextRequest) {
         listingId: listing[0]._id.toString(),
         itemId: listing[0].item._id.toString(),
         seller: listing[0].seller._id.toString(),
-        price: listing[0].price
+        priceTinybars: listing[0].priceTinybars
       });
       
       return NextResponse.json(listing[0], { status: 201 });

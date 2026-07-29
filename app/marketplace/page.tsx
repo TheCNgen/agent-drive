@@ -273,7 +273,7 @@ export default function MarketplacePage() {
                       title: listing.title,
                       description: listing.description,
                       type: 'monetized',
-                      price: listing.price,
+                      priceTinybars: listing.priceTinybars,
                       item: listing.item,
                       accessCount: listing.views,
                       createdAt: new Date(listing.createdAt)

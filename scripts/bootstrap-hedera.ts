@@ -10,7 +10,7 @@ import { config as appConfig } from "../app/lib/config";
 async function main() {
   const operatorId = appConfig.hedera.operatorId!;
   const operatorKey = appConfig.hedera.operatorKey!;
-  const treasuryId = appConfig.hedera.treasuryAccountId!;
+  const treasuryId = appConfig.payments.treasuryAccountId!;
 
   console.log("Bootstrap Hedera Script");
   console.log("-----------------------");

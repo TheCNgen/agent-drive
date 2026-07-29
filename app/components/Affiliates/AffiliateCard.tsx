@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { FiCopy, FiEdit, FiTrash2, FiExternalLink } from 'react-icons/fi';
+import { formatHbar } from '@/app/lib/money';
 
 interface Affiliate {
   _id: string;
   affiliateCode: string;
   commissionRate: number;
   status: 'active' | 'inactive' | 'suspended';
-  totalEarnings: number;
+  totalEarnings: string;
   totalSales: number;
   affiliateUser: {
     _id: string;
@@ -128,7 +129,7 @@ export default function AffiliateCard({
 
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <p className="font-anton text-xl">${affiliate.totalEarnings.toFixed(2)}</p>
+            <p className="font-anton text-xl">{formatHbar(affiliate.totalEarnings)}</p>
             <p className="font-freeman text-xs">Total Earnings</p>
           </div>
           <div>

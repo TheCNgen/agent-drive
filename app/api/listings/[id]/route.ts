@@ -25,12 +25,13 @@ interface ListingDocument {
     url: string;
   };
   views: number;
+  priceTinybars?: string;
 }
 
 type ListingUpdateData = {
   title?: string;
   description?: string;
-  price?: number;
+  priceTinybars?: string;
   status?: 'active' | 'inactive';
   tags?: string[];
 };
@@ -110,14 +111,12 @@ export async function PATCH(
     const userId = await withAuthCheck(request);
     const params = await context.params;
     const body = await request.json();
-    const { title, description, price, status, tags } = body as ListingUpdateData;
+    const { title, description, priceTinybars, status, tags } = body as ListingUpdateData;
     
-    if (price !== undefined) {
-      validateMonetizedContent({
-        type: 'monetized',
-        price,
-        paidUsers: []
-      });
+    if (priceTinybars !== undefined) {
+      if (!/^[1-9][0-9]*$/.test(priceTinybars)) {
+        throw new Error('Invalid price format');
+      }
     }
     
     if (status !== undefined && !validateStatus(status)) {
@@ -130,7 +129,7 @@ export async function PATCH(
       const updateData: ListingUpdateData = {};
       if (title !== undefined) updateData.title = title;
       if (description !== undefined) updateData.description = description;
-      if (price !== undefined) updateData.price = price;
+      if (priceTinybars !== undefined) updateData.priceTinybars = priceTinybars;
       if (status !== undefined) updateData.status = status;
       if (tags !== undefined) updateData.tags = Array.isArray(tags) ? tags : [];
       
@@ -147,7 +146,7 @@ export async function PATCH(
         submitHCSRecord('LISTING_UPDATED', {
           listingId: updatedListing._id.toString(),
           seller: updatedListing.seller._id.toString(),
-          price: updatedListing.price || updateData.price,
+          priceTinybars: updatedListing.priceTinybars || updateData.priceTinybars,
           status: updateData.status
         });
       }

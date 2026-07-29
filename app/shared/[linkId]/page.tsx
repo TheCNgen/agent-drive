@@ -7,10 +7,10 @@ import {
   addSharedItemToDrive,
   formatDate,
   formatFileSize,
-  formatPrice,
   payForSharedLink,
   SharedLinkAccessResponse
 } from '@/app/lib/frontend/sharedLinkFunctions';
+import { formatHbar } from '@/app/lib/money';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -79,13 +79,13 @@ export default function SharedLinkPage() {
       setIsProcessing(true);
       setError(null);
       
-      const result = await payForSharedLink(linkId, session.user.wallet as `0x${string}`);
+      const result = await payForSharedLink(linkId);
       console.log("Shared link payment result:", result);
       
       // Create detailed success message with blockchain info
       let successMessage = `🎉 Payment Successful!\n\n`;
       successMessage += `�� Content: ${result.transactionData.sharedLink.title}\n`;
-      successMessage += `💰 Amount: ${formatPrice(result.transactionData.transaction.amount)}\n`;
+      successMessage += `💰 Amount: ${formatHbar(result.transactionData.transaction.amountTinybars)}\n`;
       successMessage += `📋 Receipt: ${result.transactionData.transaction.receiptNumber}\n\n`;
       
       if (result.transactionData.paymentDetails) {
@@ -227,7 +227,7 @@ export default function SharedLinkPage() {
             <div className="mb-6">
               <span className="px-3 py-1 bg-primary border-2 border-black brutal-shadow-center font-freeman inline-block">
                 {link?.type === 'public' ? '🌐 Public' : '💰 Monetized'}
-                {link?.type === 'monetized' && link.price && ` - ${formatPrice(link.price)}`}
+                {link?.type === 'monetized' && link.priceTinybars && ` - ${formatHbar(link.priceTinybars)}`}
               </span>
               {isOwner && (
                 <span className="ml-2 px-3 py-1 bg-amber-200 border-2 border-black brutal-shadow-center font-freeman inline-block">
@@ -322,7 +322,7 @@ export default function SharedLinkPage() {
                     🔒 This content requires payment to access
                   </p>
                   <p className="font-freeman mb-6">
-                    Price: {formatPrice(link.price)}
+                    Price: {formatHbar(link.priceTinybars || "0")}
                   </p>
                   <button
                     onClick={handleLogin}
@@ -340,7 +340,7 @@ export default function SharedLinkPage() {
                     💳 Payment Required
                   </p>
                   <p className="font-freeman mb-4">
-                    Price: {formatPrice(link.price)}
+                    Price: {formatHbar(link.priceTinybars || "0")}
                   </p>
                   <p className="font-freeman mb-4">
                     Purchase this content to add it to your drive and access it anytime.
@@ -350,7 +350,7 @@ export default function SharedLinkPage() {
                     disabled={isProcessing}
                     className="w-full bg-primary border-2 border-black brutal-shadow-left px-6 py-3 font-freeman hover:translate-x-1 hover:translate-y-1 hover:brutal-shadow-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isProcessing ? 'Processing Payment...' : `Pay ${formatPrice(link.price)}`}
+                    {isProcessing ? 'Processing Payment...' : `Pay ${formatHbar(link.priceTinybars || "0")}`}
                   </button>
                   <p className="text-sm font-freeman mt-2 text-center">
                     Secure payment powered by x402 protocol

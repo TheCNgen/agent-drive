@@ -26,8 +26,13 @@ const listingSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: [true, 'Price is required'],
+    required: false,
     min: [0.01, 'Price must be greater than 0']
+  },
+  priceTinybars: {
+    type: String,
+    required: false,
+    match: /^[1-9][0-9]*$/
   },
   status: {
     type: String,

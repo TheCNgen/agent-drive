@@ -1,5 +1,6 @@
 import { getFileIcon } from '@/app/lib/frontend/explorerFunctions';
-import { formatDate, formatFileSize, formatPrice, getContentTypeColor, getContentTypeLabel } from '@/app/lib/frontend/monetizedContentUtils';
+import { formatDate, formatFileSize, getContentTypeColor, getContentTypeLabel } from '@/app/lib/frontend/monetizedContentUtils';
+import { formatHbar } from '@/app/lib/money';
 import { FaFolder } from 'react-icons/fa';
 
 interface MonetizedContentCardProps {
@@ -8,7 +9,7 @@ interface MonetizedContentCardProps {
     title: string;
     description?: string;
     type: 'public' | 'monetized';
-    price?: number;
+    priceTinybars?: string;
     item: {
       name: string;
       type: 'file' | 'folder';
@@ -59,9 +60,9 @@ export default function MonetizedContentCard({
           {/* <span className={`px-3 py-1 border-2 border-black font-freeman inline-block ${getContentTypeColor(content?.type)}`}>
             {getContentTypeLabel(content?.type)}
           </span> */}
-          {content?.type === 'monetized' && content?.price && (
+          {content?.type === 'monetized' && content?.priceTinybars && (
             <span className="font-freeman bg-green-200 text-green-600 border-2 border-green-600 px-3 py-1">
-              {formatPrice(content?.price)}
+              {formatHbar(content?.priceTinybars)}
             </span>
           )}
         </div>

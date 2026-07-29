@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
             ]
           })
           .populate('affiliate', 'affiliateCode affiliateUser')
-          .populate('commissionTransaction', 'amount status metadata')
+          .populate('commissionTransaction', 'amountTinybars status metadata')
           .session(dbSession),
 
         // Get summary totals
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
           {
             $group: {
               _id: '$transactionType',
-              totalAmount: { $sum: '$amount' },
+              totalAmountTinybars: { $sum: { $toLong: '$amountTinybars' } },
               count: { $sum: 1 }
             }
           }
@@ -90,8 +90,8 @@ export async function GET(request: NextRequest) {
       const filteredCommissions = commissions.filter(c => c.originalTransaction?.seller);
 
       // Calculate totals
-      const salesTotal = totals.find(t => t._id === 'purchase')?.totalAmount || 0;
-      const commissionTotal = totals.find(t => t._id === 'commission')?.totalAmount || 0;
+      const salesTotalTinybars = totals.find(t => t._id === 'purchase')?.totalAmountTinybars?.toString() || "0";
+      const commissionTotalTinybars = totals.find(t => t._id === 'commission')?.totalAmountTinybars?.toString() || "0";
       const salesCount = totals.find(t => t._id === 'purchase')?.count || 0;
       const commissionCount = totals.find(t => t._id === 'commission')?.count || 0;
 
@@ -99,20 +99,20 @@ export async function GET(request: NextRequest) {
         earnings: {
           sales: {
             transactions: mainTransactions,
-            total: salesTotal,
+            totalTinybars: salesTotalTinybars,
             count: salesCount
           },
           commissions: {
             transactions: affiliateTransactions,
-            total: commissionTotal,
+            totalTinybars: commissionTotalTinybars,
             count: commissionCount
           },
           affiliateActivity: filteredCommissions,
           summary: {
-            totalEarnings: salesTotal + commissionTotal,
+            totalEarningsTinybars: (BigInt(salesTotalTinybars) + BigInt(commissionTotalTinybars)).toString(),
             totalSales: salesCount,
             totalCommissions: commissionCount,
-            totalAffiliateCommissionsPaid: filteredCommissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0)
+            totalAffiliateCommissionsPaidTinybars: filteredCommissions.reduce((sum, c) => sum + BigInt(c.commissionAmountTinybars || "0"), BigInt(0)).toString()
           }
         },
         pagination: {

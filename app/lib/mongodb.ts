@@ -31,7 +31,7 @@ async function connectDB() {
       bufferCommands: false
     };
 
-    cached.promise = mongoose.connect(config.mongo.uri, opts);
+    cached.promise = mongoose.connect(config.mongo.uri as string, opts);
   }
 
   try {

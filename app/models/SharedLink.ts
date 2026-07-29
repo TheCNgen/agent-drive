@@ -7,6 +7,7 @@ export interface ISharedLink extends Document {
   linkId: string;
   type: 'public' | 'monetized';
   price?: number;
+  priceTinybars?: string;
   title: string;
   description?: string;
   isActive: boolean;
@@ -43,9 +44,12 @@ const sharedLinkSchema = new Schema<ISharedLink>({
   price: {
     type: Number,
     min: 0,
-    required: function(this: ISharedLink) {
-      return this?.type === 'monetized';
-    }
+    required: false
+  },
+  priceTinybars: {
+    type: String,
+    match: /^[1-9][0-9]*$/,
+    required: false
   },
   title: {
     type: String,

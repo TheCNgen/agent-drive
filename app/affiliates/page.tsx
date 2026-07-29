@@ -4,6 +4,7 @@ import AffiliateCard from '@/app/components/Affiliates/AffiliateCard';
 import FooterPattern from '@/app/components/global/FooterPattern';
 import Loader from '@/app/components/global/Loader';
 import { DashboardCard } from '@/app/components/ui/DashboardCard';
+import { formatHbar } from '@/app/lib/money';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -13,7 +14,7 @@ interface Affiliate {
   affiliateCode: string;
   commissionRate: number;
   status: 'active' | 'inactive' | 'suspended';
-  totalEarnings: number;
+  totalEarnings: string;
   totalSales: number;
   affiliateUser: {
     _id: string;
@@ -49,9 +50,9 @@ interface Commission {
       name: string;
       email: string;
     };
-    amount: number;
+    amountTinybars: string;
   };
-  commissionAmount: number;
+  commissionAmountTinybars: string;
   commissionRate: number;
   status: 'pending' | 'paid' | 'failed';
   createdAt: string;
@@ -66,9 +67,9 @@ export default function AffiliatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
-    totalEarned: 0,
-    totalOwed: 0,
-    pendingCommissions: 0,
+    totalEarned: "0",
+    totalOwed: "0",
+    pendingCommissions: "0",
     activeAffiliates: 0
   });
 
@@ -88,9 +89,9 @@ export default function AffiliatesPage() {
           setTransactions([...earnedData.transactions, ...paidData.transactions]);
           setStats(prev => ({
             ...prev,
-            totalEarned: earnedData.summary.paid.amount,
-            pendingCommissions: earnedData.summary.pending.amount,
-            totalOwed: paidData.summary.pending.amount
+            totalEarned: earnedData.summary.paid.amountTinybars,
+            pendingCommissions: earnedData.summary.pending.amountTinybars,
+            totalOwed: paidData.summary.pending.amountTinybars
           }));
         }
       } else {
@@ -192,15 +193,15 @@ export default function AffiliatesPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-green-100 border-2 border-black brutal-shadow-left p-4 text-center">
-            <h3 className="font-anton text-2xl">${stats.totalEarned.toFixed(2)}</h3>
+            <h3 className="font-anton text-2xl">{formatHbar(stats.totalEarned)}</h3>
             <p className="font-freeman text-sm">Total Earned</p>
           </div>
           <div className="bg-yellow-100 border-2 border-black brutal-shadow-left p-4 text-center">
-            <h3 className="font-anton text-2xl">${stats.pendingCommissions.toFixed(2)}</h3>
+            <h3 className="font-anton text-2xl">{formatHbar(stats.pendingCommissions)}</h3>
             <p className="font-freeman text-sm">Pending Commissions</p>
           </div>
           <div className="bg-blue-100 border-2 border-black brutal-shadow-left p-4 text-center">
-            <h3 className="font-anton text-2xl">${stats.totalOwed.toFixed(2)}</h3>
+            <h3 className="font-anton text-2xl">{formatHbar(stats.totalOwed)}</h3>
             <p className="font-freeman text-sm">Total Owed</p>
           </div>
           <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-4 text-center">
@@ -269,10 +270,10 @@ export default function AffiliatesPage() {
                             {new Date(transaction.createdAt).toLocaleDateString()}
                           </p>
                           <p className="font-anton text-lg">
-                            ${transaction.commissionAmount.toFixed(2)} commission
+                            {formatHbar(transaction.commissionAmountTinybars)} commission
                           </p>
                           <p className="font-freeman text-sm">
-                            {transaction.commissionRate}% of ${transaction.originalTransaction.amount.toFixed(2)} sale
+                            {transaction.commissionRate}% of {formatHbar(transaction.originalTransaction.amountTinybars)} sale
                           </p>
                           <p className="font-freeman text-sm">
                             Code: {transaction.affiliate.affiliateCode}

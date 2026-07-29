@@ -3,7 +3,7 @@
 import FooterPattern from '@/app/components/global/FooterPattern';
 import Loader from '@/app/components/global/Loader';
 import { getFileIcon } from '@/app/lib/frontend/explorerFunctions';
-import { formatListingPrice } from '@/app/lib/frontend/marketplaceFunctions';
+import { formatHbar } from '@/app/lib/money';
 import { formatBlockchainAddress, formatTransactionDate, getBlockExplorerUrl, getNetworkDisplayName } from '@/app/lib/frontend/transactionFunctions';
 import { Transaction } from '@/app/lib/types';
 import { useSession } from 'next-auth/react';
@@ -232,13 +232,13 @@ export default function TransactionDetailPage() {
                        session?.user?.id === transaction.seller._id ? (
                         <>
                           <p className="text-gray-900">
-                            Net Amount: {formatListingPrice(transaction.affiliateInfo.netAmount)}
+                            Net Amount: {formatHbar(transaction.affiliateInfo.netAmountTinybars)}
                           </p>
                           <p className="text-sm text-gray-500">
-                            Original Amount: {formatListingPrice(transaction.affiliateInfo.originalAmount)}
+                            Original Amount: {formatHbar(transaction.affiliateInfo.originalAmountTinybars)}
                           </p>
-                          <p className="text-sm text-gray-500">
-                            Total Commission: {formatListingPrice(transaction.affiliateInfo.originalAmount - transaction.affiliateInfo.netAmount)}
+                          <p className="text-sm text-red-500">
+                            Total Commission: {formatHbar((BigInt(transaction.affiliateInfo.originalAmountTinybars) - BigInt(transaction.affiliateInfo.netAmountTinybars)).toString())}
                           </p>
                         </>
                       ) : 
@@ -246,17 +246,17 @@ export default function TransactionDetailPage() {
                       transaction.transactionType === 'commission' ? (
                         <>
                           <p className="text-gray-900">
-                            Commission: {formatListingPrice(transaction.amount)}
+                            Commission: {formatHbar(transaction.amountTinybars)}
                           </p>
                           <p className="text-sm text-gray-500">
-                            From Sale: {formatListingPrice(transaction.affiliateInfo?.originalAmount || 0)}
+                            From Sale: {formatHbar(transaction.affiliateInfo?.originalAmountTinybars || "0")}
                           </p>
                         </>
                       ) :
                       /* For buyer or default view */
                       (
                         <p className="text-gray-900">
-                          {formatListingPrice(transaction.amount)}
+                          {formatHbar(transaction.amountTinybars)}
                         </p>
                       )}
                     </div>
@@ -278,7 +278,7 @@ export default function TransactionDetailPage() {
                           </div>
                           <div>
                             <span className="text-gray-500">Commission:</span>
-                            <span className="ml-2">{formatListingPrice(commission.amount)}</span>
+                            <span className="ml-2">{formatHbar(commission.amountTinybars)}</span>
                           </div>
                           <div>
                             <span className="text-gray-500">Rate:</span>
@@ -301,7 +301,7 @@ export default function TransactionDetailPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                         <div>
                           <span className="text-gray-500">Original Sale Amount:</span>
-                          <span className="ml-2">{formatListingPrice(transaction.affiliateInfo.originalAmount)}</span>
+                          <span className="ml-2">{formatHbar(transaction.affiliateInfo.originalAmountTinybars)}</span>
                         </div>
                         <div>
                           <span className="text-gray-500">Your Commission Rate:</span>

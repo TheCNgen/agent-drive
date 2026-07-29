@@ -7,20 +7,28 @@ export interface ITransaction extends Document {
   buyer: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
   item: mongoose.Types.ObjectId;
-  amount: number;
+  amountTinybars: string;
   status: 'completed' | 'pending' | 'failed' | 'refunded';
   transactionId: string;
+  settlementTransactionId?: string;
+  consensusTimestamp?: string;
+  distributionTransactionId?: string;
+  distributionStatus: 'complete' | 'pending';
+  transferBreakdown?: {
+    account: string;
+    tinybars: string;
+    role: 'platform' | 'seller' | 'affiliate';
+  }[];
   receiptNumber: string;
   purchaseDate: Date;
   transactionType: 'purchase' | 'sale' | 'commission';
-  paymentFlow: 'direct' | 'admin';
   affiliateInfo?: {
     isAffiliateSale: boolean;
-    originalAmount: number;
-    netAmount: number;
+    originalAmount: string;
+    netAmount: string;
     commissionDistribution: {
       affiliateId: mongoose.Types.ObjectId;
-      amount: number;
+      amount: string;
       commissionRate: number;
     }[];
   };
@@ -63,10 +71,9 @@ const transactionSchema = new Schema<ITransaction>({
     ref: 'Item',
     required: true
   },
-  amount: {
-    type: Number,
-    required: true,
-    min: 0
+  amountTinybars: {
+    type: String,
+    required: true
   },
   status: {
     type: String,
@@ -78,6 +85,25 @@ const transactionSchema = new Schema<ITransaction>({
     required: true,
     unique: true
   },
+  settlementTransactionId: {
+    type: String
+  },
+  consensusTimestamp: {
+    type: String
+  },
+  distributionTransactionId: {
+    type: String
+  },
+  distributionStatus: {
+    type: String,
+    enum: ['complete', 'pending'],
+    default: 'complete'
+  },
+  transferBreakdown: [{
+    account: String,
+    tinybars: String,
+    role: { type: String, enum: ['platform', 'seller', 'affiliate'] }
+  }],
   receiptNumber: {
     type: String,
     required: true,
@@ -92,23 +118,17 @@ const transactionSchema = new Schema<ITransaction>({
     enum: ['purchase', 'sale', 'commission'],
     required: true
   },
-  paymentFlow: {
-    type: String,
-    enum: ['direct', 'admin'],
-    required: true,
-    default: 'direct'
-  },
   affiliateInfo: {
     type: {
       isAffiliateSale: Boolean,
-      originalAmount: Number,
-      netAmount: Number,
+      originalAmount: String,
+      netAmount: String,
       commissionDistribution: [{
         affiliateId: {
           type: Schema.Types.ObjectId,
           ref: 'Affiliate'
         },
-        amount: Number,
+        amount: String,
         commissionRate: Number
       }]
     },
@@ -132,6 +152,6 @@ transactionSchema.index({ buyer: 1, purchaseDate: -1 });
 transactionSchema.index({ seller: 1, purchaseDate: -1 });
 transactionSchema.index({ transactionType: 1, parentTransaction: 1 });
 transactionSchema.index({ 'affiliateInfo.commissionDistribution.affiliateId': 1 });
-transactionSchema.index({ paymentFlow: 1, transactionType: 1 });
+transactionSchema.index({ settlementTransactionId: 1 }, { unique: true, sparse: true });
 
 export const Transaction = mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', transactionSchema); 

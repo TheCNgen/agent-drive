@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
               { path: 'seller', select: 'name email' }
             ]
           })
-          .populate('commissionTransaction', 'amount status metadata purchaseDate')
+          .populate('commissionTransaction', 'amountTinybars status metadata purchaseDate')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
           {
             $group: {
               _id: '$status',
-              amount: { $sum: '$commissionAmount' },
+              amountTinybars: { $sum: { $toLong: '$commissionAmountTinybars' } },
               count: { $sum: 1 }
             }
           }
@@ -89,15 +89,15 @@ export async function GET(request: NextRequest) {
 
       // Calculate totals by status
       const summary = {
-        pending: { amount: 0, count: 0 },
-        paid: { amount: 0, count: 0 },
-        failed: { amount: 0, count: 0 }
+        pending: { amountTinybars: 0, count: 0 },
+        paid: { amountTinybars: 0, count: 0 },
+        failed: { amountTinybars: 0, count: 0 }
       };
 
       totals.forEach(total => {
         const status = total._id as keyof typeof summary;
         if (summary[status]) {
-          summary[status].amount = total.amount;
+          summary[status].amountTinybars = total.amountTinybars ? total.amountTinybars.toString() : "0";
           summary[status].count = total.count;
         }
       });

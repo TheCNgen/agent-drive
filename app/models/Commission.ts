@@ -5,7 +5,7 @@ export interface ICommission extends Document {
   affiliate: mongoose.Types.ObjectId;
   originalTransaction: mongoose.Types.ObjectId;
   commissionTransaction: mongoose.Types.ObjectId;
-  commissionAmount: number;
+  amountTinybars: string;
   commissionRate: number;
   status: 'pending' | 'paid' | 'failed';
   paidAt?: Date;
@@ -29,10 +29,9 @@ const commissionSchema = new Schema<ICommission>({
     ref: 'Transaction',
     required: false
   },
-  commissionAmount: {
-    type: Number,
-    required: true,
-    min: 0
+  amountTinybars: {
+    type: String,
+    required: true
   },
   commissionRate: {
     type: Number,
