@@ -1,0 +1,9 @@
+import assert from "node:assert/strict";
+import { CashDrive, CashDriveError } from "../dist/index.js";
+
+// No network, no config file: constructing CashDrive must not perform I/O.
+const client = new CashDrive({ apiKey: "cdk_test_x", baseUrl: "http://localhost:1" });
+assert.equal(typeof client.agent.me, "function");
+assert.ok(CashDriveError.prototype instanceof Error);
+
+console.log("smoke-esm: ok");
