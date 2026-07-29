@@ -28,7 +28,7 @@ export default function SharedLinkPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [addedToDrive, setAddedToDrive] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const loadLinkData = useCallback(async () => {
     try {
@@ -53,57 +53,25 @@ export default function SharedLinkPage() {
     }
   }, [linkId, loadLinkData]);
 
-  const handleAddToDrive = async () => {
-    if (!linkData) return;
-
+  const handleCopyAgentInstructions = async () => {
     try {
-      setIsProcessing(true);
-      setError(null);
+      const isMonetized = linkData?.link?.type === 'monetized';
+      const cliCommand = isMonetized 
+        ? `npx -y cash-drive@latest purchase link ${linkId}`
+        : `npx -y cash-drive@latest links claim ${linkId}`;
+      const action = isMonetized ? "purchase" : "claim";
+      const instructions = `Run this command to ${action} "${linkData?.link?.title}":\n\n    ${cliCommand}`;
       
-      const result = await addSharedItemToDrive(linkId);
-      setSuccess(result.message);
-      setAddedToDrive(true);
-      
-      // Don't redirect, just show success message
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handlePayment = async () => {
-    if (!linkData || !session) return;
-
-    try {
-      setIsProcessing(true);
-      setError(null);
-      
-      const result = await payForSharedLink(linkId);
-      console.log("Shared link payment result:", result);
-      
-      // Create detailed success message with blockchain info
-      let successMessage = `🎉 Payment Successful!\n\n`;
-      successMessage += `�� Content: ${result.transactionData.sharedLink.title}\n`;
-      successMessage += `💰 Amount: ${formatHbar(result.transactionData.transaction.amountTinybars)}\n`;
-      successMessage += `📋 Receipt: ${result.transactionData.transaction.receiptNumber}\n\n`;
-      
-      if (result.transactionData.paymentDetails) {
-        successMessage += `🔗 Blockchain Details:\n`;
-        successMessage += `• Network: ${result.transactionData.paymentDetails.network}\n`;
-        successMessage += `• Transaction: ${result.transactionData.paymentDetails.transaction.slice(0, 20)}...\n`;
-        successMessage += `• Status: ${result.transactionData.paymentDetails.success ? 'Confirmed' : 'Pending'}\n\n`;
-        successMessage += `View full details in your transaction history.`;
-      }
-      
-      setSuccess(successMessage);
-      
-      // Reload link data to update access status
-      await loadLinkData();
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setIsProcessing(false);
+      await navigator.clipboard.writeText(instructions);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err: any) {
+      console.error('Copy error:', err);
+      const isMonetized = linkData?.link?.type === 'monetized';
+      const cliCommand = isMonetized 
+        ? `npx -y cash-drive@latest purchase link ${linkId}`
+        : `npx -y cash-drive@latest links claim ${linkId}`;
+      alert('Failed to copy instructions. Please copy this manually:\n\n' + cliCommand);
     }
   };
 
@@ -289,11 +257,11 @@ export default function SharedLinkPage() {
                     </div>
                   ) : (
                     <button
-                      onClick={handleAddToDrive}
-                      disabled={isProcessing || addedToDrive}
-                      className="w-full bg-primary border-2 border-black brutal-shadow-left px-6 py-3 font-freeman hover:translate-x-1 hover:translate-y-1 hover:brutal-shadow-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleCopyAgentInstructions}
+                      className="button-primary bg-primary w-full py-2 px-3 font-freeman flex flex-col items-center justify-center transition-all"
                     >
-                      {isProcessing ? 'Adding to Drive...' : addedToDrive ? 'Added to Drive ✓' : 'Add to My Drive'}
+                      <span className="text-base">{copySuccess ? 'Copied!' : 'Copy CLI Instructions'}</span>
+                      <span className="text-xs opacity-80 mt-0.5">for agent to claim</span>
                     </button>
                   )}
                 </div>
@@ -306,11 +274,11 @@ export default function SharedLinkPage() {
                     ✅ You have already purchased this content
                   </div>
                   <button
-                    onClick={handleAddToDrive}
-                    disabled={isProcessing || addedToDrive}
-                    className="w-full bg-primary border-2 border-black brutal-shadow-left px-6 py-3 font-freeman hover:translate-x-1 hover:translate-y-1 hover:brutal-shadow-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleCopyAgentInstructions}
+                    className="button-primary bg-primary w-full py-2 px-3 font-freeman flex flex-col items-center justify-center transition-all"
                   >
-                    {isProcessing ? 'Adding to Drive...' : addedToDrive ? 'Added to Drive ✓' : 'Add to My Drive'}
+                    <span className="text-base">{copySuccess ? 'Copied!' : 'Copy CLI Instructions'}</span>
+                    <span className="text-xs opacity-80 mt-0.5">for agent to claim</span>
                   </button>
                 </div>
               )}
@@ -346,11 +314,11 @@ export default function SharedLinkPage() {
                     Purchase this content to add it to your drive and access it anytime.
                   </p>
                   <button
-                    onClick={handlePayment}
-                    disabled={isProcessing}
-                    className="w-full bg-primary border-2 border-black brutal-shadow-left px-6 py-3 font-freeman hover:translate-x-1 hover:translate-y-1 hover:brutal-shadow-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleCopyAgentInstructions}
+                    className="button-primary bg-primary w-full py-2 px-3 font-freeman flex flex-col items-center justify-center transition-all"
                   >
-                    {isProcessing ? 'Processing Payment...' : `Pay ${formatHbar(link.priceTinybars || "0")}`}
+                    <span className="text-base">{copySuccess ? 'Copied!' : 'Copy CLI Instructions'}</span>
+                    <span className="text-xs opacity-80 mt-0.5">for agent to buy</span>
                   </button>
                   <p className="text-sm font-freeman mt-2 text-center">
                     Secure payment powered by x402 protocol
