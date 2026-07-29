@@ -2,7 +2,7 @@
 
 import connectDB from "@/app/lib/mongodb";
 import { Item, Listing, SharedLink, Transaction, Affiliate, User } from "@/app/lib/models";
-import { Client, TransferTransaction, Hbar, PrivateKey } from "@hashgraph/sdk";
+import { Client, TransferTransaction, Hbar, PrivateKey } from "@hiero-ledger/sdk";
 import crypto from "crypto";
 
 // 5% platform fee

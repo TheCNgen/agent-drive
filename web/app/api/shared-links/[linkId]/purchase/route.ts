@@ -1,17 +1,12 @@
-import { SharedLink, Transaction, User } from '@/app/lib/models';
+import { fulfillPurchase, PLATFORM_FEE_PERCENT, type ResolvedAffiliate } from '@/app/lib/backend/fulfillPurchase';
+import { SharedLink, User } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
 import { Affiliate } from '@/app/models/Affiliate';
-import { Commission } from '@/app/models/Commission';
 import { Types } from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/lib/backend/authConfig';
-import { Client, TransferTransaction, Hbar } from '@hashgraph/sdk';
-import { submitHCSRecord } from '@/app/lib/hedera';
-
-// 5% platform fee
-const PLATFORM_FEE_PERCENTAGE = 5;
+import { Client, TransferTransaction, Hbar } from '@hiero-ledger/sdk';
 
 interface SharedLinkDocument {
   _id: Types.ObjectId;
@@ -39,18 +34,12 @@ interface SharedLinkDocument {
   };
 }
 
-const generateReceiptNumber = (): string => {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `RCP-${timestamp}-${random}`;
-};
-
 async function getSharedLinkWithAuth(
   linkId: string,
   userId?: string
 ): Promise<SharedLinkDocument> {
-  const sharedLink = await SharedLink.findOne({ 
-    linkId, 
+  const sharedLink = await SharedLink.findOne({
+    linkId,
     isActive: true,
     type: 'monetized'
   })
@@ -81,6 +70,19 @@ async function getSharedLinkWithAuth(
   return sharedLink;
 }
 
+/**
+ * **Legacy, session-signed purchase route.** Pulls the buyer's raw private key out of
+ * MongoDB and signs the transfer server-side - an agent has no key in the database, by
+ * design, so this route is unreachable from the agent lane and always will be. Agents buy
+ * over x402 instead (`POST /api/v1/agent/purchase/link/:linkId`). This route stays working
+ * for the human lane only; invest nothing further in it.
+ *
+ * Unlike a listing purchase, **nothing is copied here** - the buyer is only added to
+ * `paidUsers`; they must claim the link (`POST /api/shared-links/:linkId`) separately to
+ * receive the item. **The on-chain transfer below sends the full price to the platform
+ * treasury, not the seller** - see `fulfillPurchase`'s doc for the ledger-vs-settlement
+ * distinction.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ linkId: string }> }
@@ -90,16 +92,16 @@ export async function POST(
     if (!session || !session.user || !session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     const userIdFromHeader = session.user.id;
     let affiliateCodeFromHeader = null;
     try {
       const body = await request.json();
       affiliateCodeFromHeader = body.affiliateCode;
-    } catch(e) {}
-    
+    } catch (e) {}
+
     await connectDB();
-    
+
     const buyerUser = await User.findById(userIdFromHeader);
     if (!buyerUser || !buyerUser.accountId || !buyerUser.privateKey) {
       return NextResponse.json({ error: 'Buyer Hedera account not found' }, { status: 400 });
@@ -118,11 +120,11 @@ export async function POST(
     }
 
     const priceTinybars = BigInt(sharedLink.priceTinybars);
-    const platformFee = (priceTinybars * BigInt(PLATFORM_FEE_PERCENTAGE)) / BigInt(100);
+    const platformFee = (priceTinybars * PLATFORM_FEE_PERCENT) / BigInt(100);
     let affiliateFee = BigInt(0);
     let affiliateUser = null;
     let affiliateRecord = null;
-    
+
     if (affiliateCodeFromHeader && sharedLink.affiliateEnabled) {
       affiliateRecord = await Affiliate.findOne({ affiliateCode: affiliateCodeFromHeader, sharedLink: sharedLink._id, status: 'active' }).populate('affiliateUser');
       if (affiliateRecord && affiliateRecord.affiliateUser && affiliateRecord.affiliateUser.accountId && affiliateRecord.affiliateUser._id.toString() !== userIdFromHeader) {
@@ -151,171 +153,58 @@ export async function POST(
     let tx = new TransferTransaction()
       .addHbarTransfer(buyerUser.accountId, Hbar.fromTinybars((-priceTinybars).toString()))
       .addHbarTransfer(platformAccount, Hbar.fromTinybars(priceTinybars.toString()));
-    
+
     const txResponse = await tx.execute(client);
     const receipt = await txResponse.getReceipt(client);
-    
+
     if (receipt.status.toString() !== "SUCCESS") {
       return NextResponse.json({ error: 'Hedera transaction failed' }, { status: 400 });
     }
-    
+
     const blockchainTransactionId = txResponse.transactionId.toString();
 
-    const transaction = await Transaction.create({
-      sharedLink: sharedLink._id,
-      buyer: userIdFromHeader,
-      seller: sharedLink.owner._id,
-      item: sharedLink.item._id,
-      amountTinybars: sharedLink.priceTinybars,
-      status: 'completed',
+    const affiliate: ResolvedAffiliate | null =
+      affiliateUser && affiliateRecord
+        ? { record: affiliateRecord, affiliateUser, feeTinybars: affiliateFee, code: affiliateCodeFromHeader }
+        : null;
+
+    const result = await fulfillPurchase({
+      target: { type: 'sharedLink', doc: sharedLink },
+      buyerId: userIdFromHeader,
       transactionId: blockchainTransactionId,
-      receiptNumber: generateReceiptNumber(),
-      purchaseDate: new Date(),
-      transactionType: 'purchase',
+      priceTinybars: sharedLink.priceTinybars,
+      platformFee,
+      sellerAmount,
+      affiliate,
       paymentFlow: 'direct',
-      metadata: {
-        blockchainTransaction: blockchainTransactionId,
-        network: 'hedera-testnet',
-        payer: buyerUser.accountId,
-        success: true
-      }
-    });
-
-    await SharedLink.findByIdAndUpdate(sharedLink._id, {
-      $addToSet: { paidUsers: userIdFromHeader }
-    });
-
-    let commission = null;
-    let commissionTransaction = null;
-    let sellerTransaction = null;
-    
-    if (affiliateUser && affiliateRecord) {
-      try {
-        // Create commission transaction record (platform pays affiliate)
-        commissionTransaction = await Transaction.create({
-          sharedLink: sharedLink._id,
-          buyer: sharedLink.owner._id, // platform/original seller pays
-          seller: affiliateUser._id, // affiliate receives
-          item: sharedLink.item._id,
-          amountTinybars: affiliateFee.toString(),
-          status: 'completed', // completed immediately via Hedera
-          transactionId: uuidv4(),
-          receiptNumber: generateReceiptNumber(),
-          purchaseDate: new Date(),
-          transactionType: 'commission',
-          paymentFlow: 'admin',
-          parentTransaction: transaction._id,
-          metadata: {
-            affiliateCode: affiliateCodeFromHeader,
-            commissionRate: affiliateRecord.commissionRate,
-            originalPurchaseAmount: sharedLink.priceTinybars,
-            originalBuyer: userIdFromHeader
-          }
-        });
-
-        // Create seller transaction record (platform pays seller)
-        sellerTransaction = await Transaction.create({
-          sharedLink: sharedLink._id,
-          buyer: sharedLink.owner._id, // platform/original seller pays (self-transaction for accounting)
-          seller: sharedLink.owner._id, // original seller receives
-          item: sharedLink.item._id,
-          amountTinybars: sellerAmount.toString(),
-          status: 'completed', // completed immediately via Hedera
-          transactionId: uuidv4(),
-          receiptNumber: generateReceiptNumber(),
-          purchaseDate: new Date(),
-          transactionType: 'sale',
-          paymentFlow: 'admin',
-          parentTransaction: transaction._id,
-          metadata: {
-            isAffiliateDistribution: true,
-            originalPurchaseAmount: sharedLink.priceTinybars,
-            commissionDeducted: affiliateFee.toString(),
-            originalBuyer: userIdFromHeader
-          }
-        });
-
-        await Transaction.findByIdAndUpdate(transaction._id, {
-          affiliateInfo: {
-            isAffiliateSale: true,
-            originalAmountTinybars: sharedLink.priceTinybars,
-            netAmountTinybars: sellerAmount.toString(),
-            commissionDistribution: [{
-              affiliateId: affiliateRecord._id,
-              amountTinybars: affiliateFee.toString(),
-              commissionRate: affiliateRecord.commissionRate
-            }]
-          }
-        });
-
-        [commission] = await Promise.all([
-          Commission.create({
-            affiliate: affiliateRecord._id,
-            originalTransaction: transaction._id,
-            commissionTransaction: commissionTransaction._id,
-            commissionRate: affiliateRecord.commissionRate,
-            commissionAmountTinybars: affiliateFee.toString(),
-            status: 'completed'
-          }),
-          Affiliate.findByIdAndUpdate(affiliateRecord._id, {
-            $inc: { 
-              totalSales: 1
-            }
-          })
-        ]);
-
-        const affiliateObj = await Affiliate.findById(affiliateRecord._id);
-        if (affiliateObj) {
-          const currentEarnings = affiliateObj.totalEarnings || "0";
-          const newEarnings = (BigInt(currentEarnings) + affiliateFee).toString();
-          await Affiliate.findByIdAndUpdate(affiliateRecord._id, {
-             totalEarnings: newEarnings
-          });
-        }
-      } catch (affiliateError) {
-        console.error('Error processing affiliate commission:', affiliateError);
-      }
-    }
-    
-    submitHCSRecord('TRANSACTION_COMPLETED', {
-      transactionId: transaction._id.toString(),
-      blockchainTransactionId: blockchainTransactionId,
-      buyer: userIdFromHeader,
-      seller: sharedLink.owner._id.toString(),
-      item: sharedLink.item._id.toString(),
-      amountTinybars: sharedLink.priceTinybars
+      payer: buyerUser.accountId,
     });
 
     return NextResponse.json({
       transactionData: {
-        transaction,
-        paymentDetails: { transaction: blockchainTransactionId, network: 'hedera-testnet', payer: buyerUser.accountId, success: true },
+        transaction: result.transaction,
+        paymentDetails: result.paymentDetails,
         message: 'Purchase completed successfully',
         sharedLink: {
           linkId: sharedLink.linkId,
           title: sharedLink.title
         },
-        affiliateCommission: commission ? {
-          amountTinybars: commission.commissionAmountTinybars,
-          rate: commission.commissionRate,
-          commissionTransaction: commissionTransaction,
-          sellerTransaction: sellerTransaction
-        } : null
+        affiliateCommission: result.affiliateCommission
       }
     }, { status: 201 });
-      
+
   } catch (error: any) {
     console.error('POST /api/shared-links/[linkId]/purchase error:', error);
-    
-    const status = 
+
+    const status =
       error.code === 11000 ? 400 :
       error.message === 'Link has expired' ? 410 :
       error.message === 'Monetized link not found or expired' ? 404 : 500;
-    
-    const message = 
+
+    const message =
       error.code === 11000 ? 'Transaction already exists' :
       error.message || 'Failed to complete purchase';
-    
+
     return NextResponse.json({ error: message }, { status });
   }
 }

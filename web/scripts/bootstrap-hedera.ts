@@ -1,4 +1,4 @@
-import { Client, TopicCreateTransaction, TopicMessageSubmitTransaction, PrivateKey } from "@hashgraph/sdk";
+import { Client, TopicCreateTransaction, TopicMessageSubmitTransaction, PrivateKey } from "@hiero-ledger/sdk";
 import fs from "fs";
 
 // A small loader for .env so this works as a standalone script

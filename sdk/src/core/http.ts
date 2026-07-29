@@ -1,7 +1,7 @@
 import type { Logger } from "../types/common.js";
 import { NetworkError, ServerError, TimeoutError, errorFromApiResponse } from "../errors.js";
 import { buildQueryString, type QueryParams } from "./query.js";
-import { DEFAULT_RETRY_POLICY, computeBackoffMs, isRetryableMethod, isRetryableStatus, parseRetryAfterMs, sleep, type RetryPolicy } from "./retry.js";
+import { DEFAULT_RETRY_POLICY, computeBackoffMs, isRetryableMethod, isRetryablePath, isRetryableStatus, parseRetryAfterMs, sleep, type RetryPolicy } from "./retry.js";
 
 export interface AuthStrategy {
   prepare(headers: Headers): void | Promise<void>;
@@ -47,7 +47,7 @@ export class HttpClient {
     const { body, query, signal } = options;
     const url = joinUrl(this.config.baseUrl, this.config.apiPrefix, path, query);
     const policy = this.config.retryPolicy ?? DEFAULT_RETRY_POLICY;
-    const canRetry = (options.retry ?? true) && isRetryableMethod(method);
+    const canRetry = (options.retry ?? true) && isRetryableMethod(method) && isRetryablePath(path);
     const maxAttempts = canRetry ? Math.max(1, this.config.maxRetries) : 1;
     const timeoutMs = options.timeoutMs ?? this.config.timeoutMs;
     const isFormBody = typeof FormData !== "undefined" && body instanceof FormData;

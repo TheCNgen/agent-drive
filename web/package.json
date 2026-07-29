@@ -11,8 +11,8 @@
   "dependencies": {
     "@google-cloud/kms": "^5.7.0",
     "@google-cloud/storage": "^7.21.0",
-    "@hashgraph/sdk": "^2.81.0",
     "@headlessui/react": "^2.2.4",
+    "@hiero-ledger/sdk": "2.85.0",
     "@mistralai/mistralai": "^2.5.0",
     "@modelcontextprotocol/sdk": "^1.12.3",
     "@types/bcryptjs": "^2.4.6",

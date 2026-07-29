@@ -1,7 +1,10 @@
 import type { HttpClient } from "../core/http.js";
 import { iteratePages, normalizePage, type Page } from "../core/pagination.js";
-import { ValidationError } from "../errors.js";
+import { ConflictError, ValidationError } from "../errors.js";
+import { executePurchase } from "./payments.js";
 import { isValidTinybars } from "../utils/hbar.js";
+import type { Logger } from "../types/common.js";
+import type { PurchaseOptions, PurchaseResult } from "../types/payment.js";
 import type {
   ClaimSharedLinkResult,
   CreateSharedLinkInput,
@@ -14,7 +17,11 @@ import type {
 const DEFAULT_LIST_LIMIT = 20;
 
 export class SharedLinksResource {
-  constructor(private readonly getHttp: () => Promise<HttpClient>) {}
+  constructor(
+    private readonly getHttp: () => Promise<HttpClient>,
+    private readonly logger: Logger,
+    private readonly profileName: string | undefined,
+  ) {}
 
   /**
    * Lists your shared links. **Requires `sharedlinks:read`.**
@@ -130,5 +137,52 @@ export class SharedLinksResource {
     return http.request<ClaimSharedLinkResult>("POST", `/shared-links/${encodeURIComponent(linkId)}`, {
       body: {},
     });
+  }
+
+  /**
+   * Buys a monetized shared link over x402. **Unlike a listing purchase, this alone does
+   * not copy anything into your drive** - a successful purchase only marks the link paid;
+   * call {@link claim} separately, or use {@link purchaseAndClaim} to do both. Requires
+   * `payments:spend` and an activated agent account.
+   *
+   * **The on-chain transfer settles the full price to the platform treasury, not the
+   * seller** - see `listings.purchase`'s doc for the ledger-vs-settlement distinction, which
+   * applies identically here.
+   *
+   * @example
+   * await client.sharedLinks.purchase(linkId);
+   * const { copiedItem } = await client.sharedLinks.claim(linkId);
+   */
+  async purchase(linkId: string, options: PurchaseOptions = {}): Promise<PurchaseResult> {
+    return executePurchase(
+      { getHttp: this.getHttp, logger: this.logger, profileName: this.profileName },
+      { type: "sharedLink", linkId },
+      options,
+    );
+  }
+
+  /**
+   * Runs {@link purchase} then {@link claim} sequentially - the common case, since a
+   * purchase alone leaves the agent paid-up but without the file. The purchase leg is never
+   * retried (stage doc §4.4); if it fails because the content was already paid for in a
+   * prior, partial run (`ConflictError`), that state is recoverable and this skips straight
+   * to claiming rather than treating it as a hard failure.
+   *
+   * @example
+   * const { claim } = await client.sharedLinks.purchaseAndClaim(linkId);
+   */
+  async purchaseAndClaim(
+    linkId: string,
+    options: PurchaseOptions = {},
+  ): Promise<{ purchase: PurchaseResult | null; claim: ClaimSharedLinkResult }> {
+    let purchase: PurchaseResult | null = null;
+    try {
+      purchase = await this.purchase(linkId, options);
+    } catch (err) {
+      if (!(err instanceof ConflictError)) throw err;
+      this.logger.info(`Already paid for shared link "${linkId}" - skipping straight to claim.`);
+    }
+    const claim = await this.claim(linkId);
+    return { purchase, claim };
   }
 }

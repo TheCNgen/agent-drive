@@ -8,6 +8,7 @@ import { ListingsResource } from "./resources/listings.js";
 import { SharedLinksResource } from "./resources/sharedLinks.js";
 import { AffiliatesResource } from "./resources/affiliates.js";
 import { TransactionsResource } from "./resources/transactions.js";
+import { PaymentsResource } from "./resources/payments.js";
 import type { Logger, LogLevel } from "./types/common.js";
 
 export interface CashDriveOptions {
@@ -31,6 +32,13 @@ export class CashDrive {
   readonly sharedLinks: SharedLinksResource;
   readonly affiliates: AffiliatesResource;
   readonly transactions: TransactionsResource;
+  /**
+   * Node-only in practice: signing a payment needs the active profile's local key material.
+   * Present on this class either way (it's shared between the `cash-drive` and
+   * `cash-drive/agent` entries), but its types/errors are exported only from
+   * `cash-drive/agent` and every method throws a clear error outside Node.
+   */
+  readonly payments: PaymentsResource;
   private readonly options: CashDriveOptions;
   private readonly logger: Logger;
   private httpClientPromise: Promise<HttpClient> | undefined;
@@ -41,10 +49,11 @@ export class CashDrive {
     const getHttp = (): Promise<HttpClient> => this.getHttpClient();
     this.agent = new AgentResource(getHttp);
     this.items = new ItemsResource(getHttp);
-    this.listings = new ListingsResource(getHttp);
-    this.sharedLinks = new SharedLinksResource(getHttp);
+    this.listings = new ListingsResource(getHttp, this.logger, options.profile);
+    this.sharedLinks = new SharedLinksResource(getHttp, this.logger, options.profile);
     this.affiliates = new AffiliatesResource(getHttp, this.logger);
     this.transactions = new TransactionsResource(getHttp, this.logger);
+    this.payments = new PaymentsResource(getHttp, this.logger, options.profile);
   }
 
   private getHttpClient(): Promise<HttpClient> {

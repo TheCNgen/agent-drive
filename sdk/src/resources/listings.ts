@@ -1,7 +1,10 @@
 import type { HttpClient } from "../core/http.js";
 import { iteratePages, normalizePage, type Page } from "../core/pagination.js";
 import { ValidationError } from "../errors.js";
+import { executePurchase } from "./payments.js";
 import { isValidTinybars } from "../utils/hbar.js";
+import type { Logger } from "../types/common.js";
+import type { PurchaseOptions, PurchaseResult } from "../types/payment.js";
 import type {
   CreateListingInput,
   ListListingsParams,
@@ -22,7 +25,11 @@ function assertValidPriceTinybars(value: string): void {
 }
 
 export class ListingsResource {
-  constructor(private readonly getHttp: () => Promise<HttpClient>) {}
+  constructor(
+    private readonly getHttp: () => Promise<HttpClient>,
+    private readonly logger: Logger,
+    private readonly profileName: string | undefined,
+  ) {}
 
   /**
    * Lists marketplace listings. **Public** — no scope required, though the SDK sends the
@@ -154,5 +161,30 @@ export class ListingsResource {
   async tags(): Promise<string[]> {
     const http = await this.getHttp();
     return http.request<string[]>("GET", "/listings/tags");
+  }
+
+  /**
+   * Buys a listing over x402. Quotes the price (`402`), signs a Hedera transfer with the
+   * agent's own key, and submits it (`201`) - end to end, on Hedera testnet. Requires
+   * `payments:spend` (off by default on new agents) and an **activated** agent account.
+   *
+   * **The on-chain transfer settles the full price to the platform treasury, not the
+   * seller.** The seller's and any affiliate's share are ledger entries on the backend
+   * awaiting an off-chain payout - this call does not send them value directly.
+   *
+   * Never retried past the point a payment is signed - a lost `201` response leaves the
+   * payment journaled at `~/.cash-drive/pending/`; see `client.payments.recoverPending()`.
+   *
+   * @example
+   * const result = await client.listings.purchase(listingId, {
+   *   onQuote: (q) => console.log(`Paying ${q.priceTinybars} tinybars`),
+   * });
+   */
+  async purchase(id: string, options: PurchaseOptions = {}): Promise<PurchaseResult> {
+    return executePurchase(
+      { getHttp: this.getHttp, logger: this.logger, profileName: this.profileName },
+      { type: "listing", id },
+      options,
+    );
   }
 }

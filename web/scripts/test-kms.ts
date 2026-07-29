@@ -1,5 +1,5 @@
 import { sealKey, unsealKey } from '../app/lib/hedera';
-import { PrivateKey } from '@hashgraph/sdk';
+import { PrivateKey } from '@hiero-ledger/sdk';
 
 async function main() {
   const pk = PrivateKey.generateECDSA();

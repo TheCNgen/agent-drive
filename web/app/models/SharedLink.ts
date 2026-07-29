@@ -94,9 +94,13 @@ sharedLinkSchema.index({ expiresAt: 1 }, {
   partialFilterExpression: { expiresAt: { $ne: null } }
 });
 
+// This hook runs after any explicit `.populate('owner', ...)` a caller chains (it fires at
+// query-execution time), so its select string is the one that actually wins - a caller-side
+// `.populate('owner', '... accountId')` was silently overridden without `accountId` here,
+// which is why the purchase flow's "seller has no Hedera account" check always failed.
 sharedLinkSchema.pre(['find', 'findOne'], function() {
   this.populate('item', 'name type size mimeType url')
-      .populate('owner', 'name email wallet');
+      .populate('owner', 'name email wallet accountId');
 });
 
 const SharedLinkModel = mongoose.models.SharedLink || mongoose.model<ISharedLink>('SharedLink', sharedLinkSchema);

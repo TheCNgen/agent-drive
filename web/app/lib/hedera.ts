@@ -1,4 +1,4 @@
-import { Client, PrivateKey, AccountCreateTransaction, Hbar, TopicMessageSubmitTransaction } from '@hashgraph/sdk';
+import { Client, PrivateKey, AccountCreateTransaction, Hbar, TopicMessageSubmitTransaction } from '@hiero-ledger/sdk';
 import { KeyManagementServiceClient } from '@google-cloud/kms';
 import { config } from './config';
 

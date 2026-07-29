@@ -22,6 +22,15 @@ export interface ITransaction extends Document {
   receiptNumber: string;
   purchaseDate: Date;
   transactionType: 'purchase' | 'sale' | 'commission';
+  /**
+   * `direct`/`x402`: an on-chain transfer actually happened for this row (legacy
+   * session-signed transfer vs. an x402-settled one). `admin`: a ledger-only entry
+   * (seller/affiliate distribution) awaiting off-chain payout - never settled on-chain.
+   * Previously accepted by `Transaction.create()` calls but absent from the schema, so
+   * Mongoose strict mode silently dropped it on every write; `paymentFlow` queries
+   * (see /api/transactions) always matched zero documents until this field existed.
+   */
+  paymentFlow?: 'direct' | 'x402' | 'admin';
   affiliateInfo?: {
     isAffiliateSale: boolean;
     originalAmount: string;
@@ -117,6 +126,11 @@ const transactionSchema = new Schema<ITransaction>({
     type: String,
     enum: ['purchase', 'sale', 'commission'],
     required: true
+  },
+  paymentFlow: {
+    type: String,
+    enum: ['direct', 'x402', 'admin'],
+    required: false
   },
   affiliateInfo: {
     type: {

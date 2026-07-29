@@ -16,6 +16,7 @@ export function helpCommand(): number {
       "  cash-drive onboard --resume [--profile <name>] [--json]",
       "  cash-drive whoami [--profile <name>] [--json]",
       "  cash-drive logout [--profile <name>] [--all] [--yes] [--force] [--json]",
+      "  cash-drive payments recover [--profile <name>] [--json]",
       "  cash-drive --version | --help",
     ].join("\n"),
   );

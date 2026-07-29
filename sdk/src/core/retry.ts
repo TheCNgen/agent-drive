@@ -13,8 +13,18 @@ export const DEFAULT_RETRY_POLICY: RetryPolicy = {
 const RETRYABLE_METHODS = new Set(["GET", "HEAD"]);
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
+// A retried x402 purchase submission re-sends an already-signed payment payload. POST is
+// already excluded from RETRYABLE_METHODS above, which already blocks this - this is a
+// second, independent check so a future loosening of the method policy (e.g. allowing
+// idempotent POSTs generically) can't silently re-enable retrying a `/purchase` call.
+const NEVER_RETRY_PATH_SUBSTRINGS = ["/purchase"];
+
 export function isRetryableMethod(method: string): boolean {
   return RETRYABLE_METHODS.has(method.toUpperCase());
+}
+
+export function isRetryablePath(path: string): boolean {
+  return !NEVER_RETRY_PATH_SUBSTRINGS.some((s) => path.includes(s));
 }
 
 export function isRetryableStatus(status: number): boolean {

@@ -47,7 +47,9 @@
     "prepublishOnly": "npm run verify"
   },
   "dependencies": {
-    "@hiero-ledger/sdk": "2.85.0"
+    "@hiero-ledger/sdk": "2.85.0",
+    "@x402/core": "^2.19.0",
+    "@x402/hedera": "^2.19.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

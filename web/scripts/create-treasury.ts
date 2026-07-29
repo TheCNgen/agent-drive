@@ -1,4 +1,4 @@
-import { Client, PrivateKey, AccountCreateTransaction, Hbar } from "@hashgraph/sdk";
+import { Client, PrivateKey, AccountCreateTransaction, Hbar } from "@hiero-ledger/sdk";
 import fs from "fs";
 
 async function main() {

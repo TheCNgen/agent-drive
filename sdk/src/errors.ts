@@ -134,6 +134,65 @@ export class TimeoutError extends CashDriveError {
   }
 }
 
+export class AgentNotActivatedError extends CashDriveError {
+  constructor(options: CashDriveErrorOptions = {}) {
+    super(
+      "This agent's Hedera account is not activated. Run `cash-drive onboard --resume`.",
+      "agent_not_activated",
+      options,
+    );
+  }
+}
+
+export class InsufficientBalanceError extends CashDriveError {
+  readonly requiredTinybars: string;
+  readonly availableTinybars: string;
+  constructor(requiredTinybars: string, availableTinybars: string, options: CashDriveErrorOptions = {}) {
+    super(
+      `This purchase needs ${requiredTinybars} tinybars but the agent's wallet only holds ${availableTinybars}. Fund the agent's Hedera account and try again.`,
+      "insufficient_balance",
+      options,
+    );
+    this.requiredTinybars = requiredTinybars;
+    this.availableTinybars = availableTinybars;
+  }
+}
+
+export class PriceChangedError extends CashDriveError {
+  readonly oldPriceTinybars: string;
+  readonly newPriceTinybars: string;
+  constructor(oldPriceTinybars: string, newPriceTinybars: string, options: CashDriveErrorOptions = {}) {
+    super(
+      `The quote expired and the re-quoted price (${newPriceTinybars} tinybars) differs from the original (${oldPriceTinybars} tinybars). Refusing to pay a different amount than shown; call quote() again to confirm.`,
+      "price_changed",
+      options,
+    );
+    this.oldPriceTinybars = oldPriceTinybars;
+    this.newPriceTinybars = newPriceTinybars;
+  }
+}
+
+export class FacilitatorUnavailableError extends CashDriveError {
+  constructor(message = "The x402 payment facilitator is unreachable. This is transient - nothing was signed or submitted, and the purchase is safe to retry.", options: CashDriveErrorOptions = {}) {
+    super(message, "facilitator_unavailable", options);
+  }
+}
+
+export class PaymentVerificationError extends CashDriveError {
+  constructor(message = "The facilitator rejected the payment payload.", options: CashDriveErrorOptions = {}) {
+    super(message, "payment_verification_failed", options);
+  }
+}
+
+export class SettlementFailedError extends CashDriveError {
+  constructor(
+    message = "Settlement failed; whether the transaction reached the network is unknown. Run `cash-drive payments recover`.",
+    options: CashDriveErrorOptions = {},
+  ) {
+    super(message, "settlement_failed", options);
+  }
+}
+
 export class ConfigCorruptError extends CashDriveError {
   constructor(path: string, options: CashDriveErrorOptions = {}) {
     super(
@@ -191,6 +250,12 @@ export function errorFromApiResponse(
       return new PaymentRequiredError(message, base);
     case "server_error":
       return new ServerError(message, base);
+    case "facilitator_unavailable":
+      return new FacilitatorUnavailableError(message, base);
+    case "payment_verification_failed":
+      return new PaymentVerificationError(message, base);
+    case "settlement_failed":
+      return new SettlementFailedError(message, base);
     default:
       break;
   }

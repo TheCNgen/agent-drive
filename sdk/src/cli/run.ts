@@ -1,6 +1,7 @@
 import { onboardCommand } from "./commands/onboard.js";
 import { whoamiCommand } from "./commands/whoami.js";
 import { logoutCommand } from "./commands/logout.js";
+import { paymentsCommand } from "./commands/payments.js";
 import { versionCommand, helpCommand } from "./commands/version.js";
 import { reportError, writeStderr } from "./output.js";
 
@@ -59,7 +60,7 @@ export function flagBoolean(flags: Record<string, FlagValue>, key: string): bool
 }
 
 export async function run(argv: string[]): Promise<number> {
-  const { command, flags } = parseArgs(argv);
+  const { command, flags, positionals } = parseArgs(argv);
   const json = flagBoolean(flags, "json");
 
   if (command === undefined && (flags.version === true || flags.v === true)) {
@@ -77,12 +78,14 @@ export async function run(argv: string[]): Promise<number> {
         return await whoamiCommand(flags, json);
       case "logout":
         return await logoutCommand(flags, json);
+      case "payments":
+        return await paymentsCommand(positionals[0], flags, json);
       case "version":
         return versionCommand();
       case "help":
         return helpCommand();
       case undefined:
-        writeStderr("Usage: cash-drive <onboard|whoami|logout|version> [flags]. Run with --help for details.");
+        writeStderr("Usage: cash-drive <onboard|whoami|logout|payments|version> [flags]. Run with --help for details.");
         return 2;
       default:
         writeStderr(`Unknown command "${command}". Run with --help for details.`);
