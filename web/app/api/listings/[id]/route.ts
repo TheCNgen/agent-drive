@@ -143,7 +143,7 @@ export async function PATCH(
         .lean<ListingDocument>();
       
       if (updatedListing) {
-        submitHCSRecord('LISTING_UPDATED', {
+        await submitHCSRecord('LISTING_UPDATED', {
           listingId: updatedListing._id.toString(),
           seller: updatedListing.seller._id.toString(),
           priceTinybars: updatedListing.priceTinybars || updateData.priceTinybars,
@@ -168,7 +168,7 @@ export async function DELETE(
       const listing = await getListingWithAuth(params.id, userId, true);
       await Listing.findOneAndDelete({ _id: params.id }).session(session);
       
-      submitHCSRecord('LISTING_DELETED', {
+      await submitHCSRecord('LISTING_DELETED', {
         listingId: params.id,
         seller: listing.seller._id.toString()
       });
@@ -176,4 +176,4 @@ export async function DELETE(
       return NextResponse.json({ message: 'Listing deleted successfully' });
     });
   });
-} 
+}

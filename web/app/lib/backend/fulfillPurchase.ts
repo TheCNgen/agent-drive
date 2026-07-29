@@ -263,7 +263,7 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
     }
   }
 
-  submitHCSRecord('TRANSACTION_COMPLETED', {
+  await submitHCSRecord('TRANSACTION_COMPLETED', {
     transactionId: transaction._id.toString(),
     blockchainTransactionId: transactionId,
     buyer: buyerId,

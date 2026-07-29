@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         listing[0].populate({ path: 'seller', select: 'name wallet', options: { session } })
       ]);
       
-      submitHCSRecord('LISTING_CREATED', {
+      await submitHCSRecord('LISTING_CREATED', {
         listingId: listing[0]._id.toString(),
         itemId: listing[0].item._id.toString(),
         seller: listing[0].seller._id.toString(),
@@ -121,4 +121,4 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(listing[0], { status: 201 });
     });
   });
-} 
+}

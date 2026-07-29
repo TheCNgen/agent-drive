@@ -234,8 +234,8 @@ export async function POST(request: NextRequest) {
             }, 1000); // 1 second delay
           }
           
-          // Submit HCS record asynchronously
-          submitHCSRecord('ITEM_CREATED', {
+          // Submit HCS record synchronously
+          await submitHCSRecord('ITEM_CREATED', {
             itemId: itemId,
             name: item.name,
             owner: item.owner.toString(),

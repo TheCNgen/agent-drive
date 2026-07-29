@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ logs: [] });
     }
 
-    const response = await fetch(`${config.hedera.mirrorNodeUrl}/api/v1/topics/${topicId}/messages?limit=100&order=desc`);
+    const response = await fetch(`${config.hedera.mirrorNodeUrl}/api/v1/topics/${topicId}/messages?limit=100&order=desc`, { cache: 'no-store' });
     if (!response.ok) {
       return NextResponse.json({ logs: [] });
     }
