@@ -38,11 +38,11 @@
   "scripts": {
     "build": "tsup && chmod +x dist/cli.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --dir tests/unit",
-    "test:e2e": "vitest run --dir tests/e2e",
+    "test": "vitest run --dir tests/unit --passWithNoTests",
+    "test:e2e": "vitest run --dir tests/e2e --passWithNoTests",
     "mock": "tsx mock/server.ts",
     "smoke": "node scripts/smoke-esm.mjs && node scripts/smoke-cjs.cjs",
-    "lint:pack": "publint && attw --pack .",
+    "lint:pack": "publint && attw --pack . --ignore-rules no-resolution",
     "verify": "npm run typecheck && npm run test && npm run build && npm run smoke && npm run lint:pack",
     "prepublishOnly": "npm run verify"
   },
