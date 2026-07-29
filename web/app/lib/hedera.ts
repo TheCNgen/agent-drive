@@ -66,9 +66,9 @@ export async function createHederaAccount(): Promise<{ accountId: string; encryp
 }
 
 export async function submitHCSRecord(event: string, payload: any): Promise<string> {
-  const topicId = process.env.HEDERA_HCS_TOPIC_ID;
+  const topicId = config.hedera.provenanceTopicId;
   if (!topicId) {
-    console.warn("HEDERA_HCS_TOPIC_ID is not set, skipping HCS submission");
+    console.warn("provenanceTopicId is not set, skipping HCS submission");
     return "";
   }
 

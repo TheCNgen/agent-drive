@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const userId = session.user.id;
-    const topicId = process.env.HEDERA_HCS_TOPIC_ID;
+    const topicId = config.hedera.provenanceTopicId;
     
     if (!topicId) {
       return NextResponse.json({ logs: [] });
