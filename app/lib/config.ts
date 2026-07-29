@@ -10,15 +10,18 @@ export const config = {
     network: process.env.HEDERA_NETWORK || "testnet",
     operatorId: process.env.HEDERA_OPERATOR_ID,
     operatorKey: process.env.HEDERA_OPERATOR_KEY,
-    treasuryAccountId: process.env.PLATFORM_TREASURY_ACCOUNT_ID,
-    treasuryKey: process.env.PLATFORM_TREASURY_KEY,
     mirrorNodeUrl: process.env.HEDERA_MIRROR_NODE_URL || "https://testnet.mirrornode.hedera.com",
     provenanceTopicId: process.env.HCS_PROVENANCE_TOPIC_ID,
+    faucetDripEnabled: process.env.FAUCET_DRIP_ENABLED === "true",
+    faucetDripTinybars: process.env.FAUCET_DRIP_TINYBARS || "500000000",
+  },
+  payments: {
+    network: process.env.X402_NETWORK || "hedera:testnet",
     facilitatorUrl: process.env.X402_FACILITATOR_URL || "https://api.testnet.blocky402.com",
     feePayer: process.env.X402_FEE_PAYER || "0.0.7162784",
     platformFeeBps: parseInt(process.env.PLATFORM_FEE_BPS || "500", 10),
-    faucetDripEnabled: process.env.FAUCET_DRIP_ENABLED === "true",
-    faucetDripTinybars: process.env.FAUCET_DRIP_TINYBARS || "500000000",
+    treasuryAccountId: process.env.PLATFORM_TREASURY_ACCOUNT_ID,
+    treasuryKey: process.env.PLATFORM_TREASURY_KEY,
   },
   gcs: {
     projectId: process.env.GCP_PROJECT_ID,
@@ -50,8 +53,8 @@ const required = [
   ["auth.secret", config.auth.secret],
   ["hedera.operatorId", config.hedera.operatorId],
   ["hedera.operatorKey", config.hedera.operatorKey],
-  ["hedera.treasuryAccountId", config.hedera.treasuryAccountId],
-  ["hedera.treasuryKey", config.hedera.treasuryKey],
+  ["payments.treasuryAccountId", config.payments.treasuryAccountId],
+  ["payments.treasuryKey", config.payments.treasuryKey],
   ["gcs.bucketName", config.gcs.bucketName],
   ["kms.keyName", config.kms.keyName],
   ["mistral.apiKey", config.mistral.apiKey],
@@ -62,3 +65,4 @@ for (const [name, value] of required) {
     throw new Error(`Missing required configuration: ${name}`);
   }
 }
+

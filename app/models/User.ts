@@ -26,6 +26,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false, // Make optional for backwards compatibility
   },
+  encryptedPrivateKey: {
+    type: String,
+    required: false, // Will become true after migration
+    select: false,
+  },
+  kmsKeyVersion: {
+    type: String,
+    required: false,
+  },
   name: {
     type: String,
     required: [true, 'Name is required'],

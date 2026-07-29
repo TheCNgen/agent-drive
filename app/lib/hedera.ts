@@ -1,4 +1,8 @@
 import { Client, PrivateKey, AccountCreateTransaction, Hbar, TopicMessageSubmitTransaction } from '@hashgraph/sdk';
+import { KeyManagementServiceClient } from '@google-cloud/kms';
+import { config } from './config';
+
+const kms = new KeyManagementServiceClient();
 
 let client: Client;
 
@@ -9,8 +13,8 @@ export function getHederaClient(): Client {
   
   client = Client.forTestnet();
   
-  const operatorId = process.env.HEDERA_OPERATOR_ID;
-  const operatorKey = process.env.HEDERA_OPERATOR_KEY;
+  const operatorId = config.hedera.operatorId;
+  const operatorKey = config.hedera.operatorKey;
 
   if (!operatorId || !operatorKey) {
     throw new Error('Hedera operator configuration missing from environment variables.');
@@ -20,7 +24,23 @@ export function getHederaClient(): Client {
   return client;
 }
 
-export async function createHederaAccount(): Promise<{ accountId: string; privateKey: string; evmAddress: string }> {
+export async function sealKey(plaintext: string): Promise<string> {
+  const [res] = await kms.encrypt({
+    name: config.kms.keyName,
+    plaintext: Buffer.from(plaintext, 'utf8'),
+  });
+  return Buffer.from(res.ciphertext as Uint8Array).toString('base64');
+}
+
+export async function unsealKey(ciphertextB64: string): Promise<string> {
+  const [res] = await kms.decrypt({
+    name: config.kms.keyName,
+    ciphertext: Buffer.from(ciphertextB64, 'base64'),
+  });
+  return Buffer.from(res.plaintext as Uint8Array).toString('utf8');
+}
+
+export async function createHederaAccount(): Promise<{ accountId: string; encryptedPrivateKey: string; evmAddress: string }> {
   const newAccountPrivateKey = PrivateKey.generateECDSA();
   const newAccountPublicKey = newAccountPrivateKey.publicKey;
   const evmAddress = `0x${newAccountPublicKey.toEvmAddress()}`;
@@ -40,7 +60,7 @@ export async function createHederaAccount(): Promise<{ accountId: string; privat
 
   return {
     accountId: newAccountId.toString(),
-    privateKey: newAccountPrivateKey.toStringRaw(), // Storing as hex string
+    encryptedPrivateKey: await sealKey(newAccountPrivateKey.toStringRaw()),
     evmAddress
   };
 }

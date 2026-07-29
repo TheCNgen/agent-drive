@@ -15,6 +15,7 @@ interface CustomUser extends NextAuthUser {
   name?: string | null;
   email?: string | null;
   wallet?: string | null;
+  accountId?: string | null;
   rootFolder?: string | null;
 }
 
@@ -25,6 +26,7 @@ declare module 'next-auth' {
   interface JWT {
     id?: string;
     wallet?: string | null;
+    accountId?: string | null;
     rootFolder?: string | null;
   }
 }
@@ -53,19 +55,22 @@ export const authOptions: AuthOptions = {
             throw new Error('Name is required for registration');
           }
 
+          const existing = await User.findOne({ email: credentials.email });
+          if (existing) throw new Error("User already exists with this email");
+
+          console.log("Creating Hedera account for user...");
+          const { accountId, encryptedPrivateKey, evmAddress } = await createHederaAccount();
+
           const session = await mongoose.startSession();
           
           try {
             revalidatePath("/", "layout");
             
             await session.withTransaction(async () => {
-              const existingUser = await User.findOne({ email: credentials.email }).session(session);
-              if (existingUser) {
+              const raced = await User.findOne({ email: credentials.email }).session(session);
+              if (raced) {
                 throw new Error('User already exists with this email');
               }
-
-              console.log("Creating Hedera account for user...");
-              const { accountId, privateKey, evmAddress } = await createHederaAccount();
 
               const newUser = new User({
                 name: credentials.name,
@@ -73,7 +78,7 @@ export const authOptions: AuthOptions = {
                 password: credentials.password,
                 wallet: evmAddress,
                 accountId,
-                privateKey
+                encryptedPrivateKey
               });
 
               const rootFolder = new Item({
@@ -97,11 +102,12 @@ export const authOptions: AuthOptions = {
               email: createdUser!.email,
               name: createdUser!.name,
               wallet: createdUser!.wallet,
+              accountId: createdUser!.accountId,
               rootFolder: createdUser!.rootFolder,
             };
 
           } catch (error: any) {
-            console.error("Registration error:", error);
+            console.error(`ORPHANED HEDERA ACCOUNT ${accountId} — registration rolled back`, error);
             throw new Error(`Registration failed: ${error.message}`);
           } finally {
             await session.endSession();
@@ -125,6 +131,7 @@ export const authOptions: AuthOptions = {
             email: user.email,
             name: user.name,
             wallet: user.wallet,
+            accountId: user.accountId,
             rootFolder: user.rootFolder,
           };
         }
@@ -147,6 +154,7 @@ export const authOptions: AuthOptions = {
         token.name = user.name;
         token.email = user.email;
         token.wallet = user.wallet;
+        token.accountId = user.accountId;
         token.rootFolder = user.rootFolder;
       }
       return token;
@@ -157,6 +165,7 @@ export const authOptions: AuthOptions = {
         session.user.name = token.name;
         session.user.email = token.email;
         session.user.wallet = token.wallet as string | null;
+        session.user.accountId = token.accountId as string | null;
         session.user.rootFolder = token.rootFolder as string | null;
       }
       return session;
