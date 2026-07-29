@@ -42,10 +42,14 @@ function DashboardContent() {
   return (
     <>
       <main className="max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center p-8 rounded-lg mb-4">
-          <h2 className="heading-text-2 text-6xl font-anton">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="heading-text-2 text-6xl font-anton mb-4">
             DASHBOARD
-          </h2>
+          </h1>
+          <p className="font-freeman text-xl max-w-2xl mx-auto">
+            Manage your agents, files, and track your account activity
+          </p>
         </div>
         
         <DashboardCard />
