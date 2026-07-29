@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         onboardingState: agent.onboardingState,
       },
       claimCode: code,
-      expiresAt,
+      claimExpiresAt: expiresAt,
     });
   } catch (error: any) {
     console.error('POST /api/agents/[id]/claim error:', error);

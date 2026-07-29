@@ -43,6 +43,7 @@ export interface FulfillPurchaseInput {
   paymentFlow: 'direct' | 'x402';
   /** The Hedera account id that actually paid (buyer's account for `direct`, agent's account for `x402`). */
   payer: string;
+  agentId: string | null;
 }
 
 export interface FulfillPurchaseResult {
@@ -109,7 +110,7 @@ async function copyPurchasedItem(originalItemId: string, newParentId: string, bu
  * rather than throwing or re-running any side effect a second time.
  */
 export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<FulfillPurchaseResult> {
-  const { target, buyerId, transactionId, priceTinybars, platformFee, sellerAmount, affiliate, paymentFlow, payer } =
+  const { target, buyerId, transactionId, priceTinybars, platformFee, sellerAmount, affiliate, paymentFlow, payer, agentId } =
     input;
 
   const doc = target.doc;
@@ -131,6 +132,7 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
       purchaseDate: new Date(),
       transactionType: 'purchase',
       paymentFlow,
+      agent: agentId,
       metadata: {
         blockchainTransaction: transactionId,
         network: 'hedera-testnet',
@@ -186,6 +188,7 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
         purchaseDate: new Date(),
         transactionType: 'commission',
         paymentFlow: 'admin',
+        agent: null,
         parentTransaction: transaction._id,
         metadata: {
           affiliateCode: affiliate.code,
@@ -207,6 +210,7 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
         purchaseDate: new Date(),
         transactionType: 'sale',
         paymentFlow: 'admin',
+        agent: null,
         parentTransaction: transaction._id,
         metadata: {
           isAffiliateDistribution: true,

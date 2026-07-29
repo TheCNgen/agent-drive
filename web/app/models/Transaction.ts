@@ -41,6 +41,7 @@ export interface ITransaction extends Document {
       commissionRate: number;
     }[];
   };
+  agent?: mongoose.Types.ObjectId | null;
   parentTransaction?: mongoose.Types.ObjectId;
   metadata?: {
     blockchainTransaction?: string;
@@ -148,6 +149,12 @@ const transactionSchema = new Schema<ITransaction>({
     },
     required: false
   },
+  agent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Agent',
+    default: null,
+    index: true,
+  },
   parentTransaction: {
     type: Schema.Types.ObjectId,
     ref: 'Transaction',
@@ -167,5 +174,6 @@ transactionSchema.index({ seller: 1, purchaseDate: -1 });
 transactionSchema.index({ transactionType: 1, parentTransaction: 1 });
 transactionSchema.index({ 'affiliateInfo.commissionDistribution.affiliateId': 1 });
 transactionSchema.index({ settlementTransactionId: 1 }, { unique: true, sparse: true });
+transactionSchema.index({ agent: 1, status: 1 });
 
 export const Transaction = mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', transactionSchema); 

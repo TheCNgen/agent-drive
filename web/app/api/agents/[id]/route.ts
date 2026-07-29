@@ -1,6 +1,8 @@
 import { authOptions } from '@/app/lib/backend/authConfig';
 import connectDB from '@/app/lib/mongodb';
-import { Agent, AgentClaim } from '@/app/lib/models';
+import { Agent, AgentClaim, Transaction } from '@/app/lib/models';
+import { getCachedBalanceTinybars } from '@/app/lib/backend/agentFunding';
+import { SUGGESTED_FUNDING_TINYBARS } from '@/app/lib/backend/agentKeys';
 import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -37,6 +39,33 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       }
     }
 
+    const balanceTinybars = agent.accountId ? await getCachedBalanceTinybars(agent.accountId) : '0';
+
+    const spend = await Transaction.aggregate([
+      { $match: { agent: agent._id, paymentFlow: 'x402' } },
+      { $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          total: { $sum: { $toDecimal: '$amountTinybars' } },
+      } },
+    ]);
+
+    let totalSpentTinybars = '0';
+    let purchasesSucceeded = 0;
+    let purchasesFailed = 0;
+
+    for (const row of spend) {
+      if (row._id === 'completed') {
+        purchasesSucceeded += row.count;
+        totalSpentTinybars = (BigInt(totalSpentTinybars) + BigInt(row.total.toString().split('.')[0])).toString();
+      } else if (row._id === 'failed') {
+        purchasesFailed += row.count;
+      }
+    }
+
+    const total = purchasesSucceeded + purchasesFailed;
+    const successRate = total > 0 ? Number((purchasesSucceeded / total * 100).toFixed(1)) : null;
+
     return NextResponse.json({
       agent: {
         id: agent._id.toString(),
@@ -46,10 +75,26 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         scopes: agent.scopes,
         evmAddress: agent.evmAddress,
         accountId: agent.accountId,
-        network: agent.network,
+        network: agent.network || 'hedera-testnet',
         createdAt: agent.createdAt,
         lastSeenAt: agent.lastSeenAt,
         revokedAt: agent.revokedAt,
+        stats: {
+          totalSpentTinybars,
+          purchasesSucceeded,
+          purchasesFailed,
+          successRate,
+        }
+      },
+      wallet: {
+        evmAddress: agent.evmAddress || null,
+        accountId: agent.accountId || null,
+        network: agent.network || 'hedera-testnet',
+        balanceTinybars,
+        usdcBalance: null,
+        funded: ['funded', 'active'].includes(agent.onboardingState),
+        activated: agent.onboardingState === 'active',
+        suggestedFundingTinybars: SUGGESTED_FUNDING_TINYBARS,
       },
       claim,
     });

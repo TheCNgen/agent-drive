@@ -162,6 +162,7 @@ export async function handleX402Purchase(
       affiliate: quote.resolvedAffiliate,
       paymentFlow: 'x402',
       payer: settleResult.payer ?? verifyResult.payer ?? 'unknown',
+      agentId: principal.agentId,
     });
 
     const response = NextResponse.json(

@@ -178,6 +178,7 @@ export async function POST(
       affiliate,
       paymentFlow: 'direct',
       payer: buyerUser.accountId,
+      agentId: null,
     });
 
     return NextResponse.json({

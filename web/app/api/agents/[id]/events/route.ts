@@ -78,11 +78,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
           const balanceTinybars = current.accountId ? await getCachedBalanceTinybars(current.accountId) : '0';
 
           const snapshot = {
-            state: current.onboardingState,
+            onboardingState: current.onboardingState,
+            status: current.status,
             evmAddress: current.evmAddress,
             accountId: current.accountId,
             balanceTinybars,
             suggestedFundingTinybars: SUGGESTED_FUNDING_TINYBARS,
+            lastSeenAt: current.lastSeenAt,
           };
           const serialized = JSON.stringify(snapshot);
 
