@@ -53,6 +53,7 @@ export default function AffiliateCard({
   const [editCommission, setEditCommission] = useState(affiliate.commissionRate);
   const [editStatus, setEditStatus] = useState(affiliate.status);
   const [loading, setLoading] = useState(false);
+  const [copyAgentSuccess, setCopyAgentSuccess] = useState(false);
 
   const isOwner = affiliate.owner._id === currentUserId;
   const content = affiliate.listing || affiliate.sharedLink;
@@ -189,6 +190,22 @@ export default function AffiliateCard({
               <FiExternalLink className="w-4 h-4" />
             </button>
           </div>
+        </div>
+
+        <div className="mb-4">
+          <button
+            onClick={() => {
+              const command = `npx -y cash-drive@latest purchase ${affiliate.listing ? 'listing' : 'link'} ${affiliate.listing ? affiliate.listing._id : affiliate.sharedLink?.linkId} --affiliate ${affiliate.affiliateCode}`;
+              const instructions = `Run this command to purchase "${content?.title}":\n\n    ${command}`;
+              navigator.clipboard.writeText(instructions);
+              setCopyAgentSuccess(true);
+              setTimeout(() => setCopyAgentSuccess(false), 2000);
+            }}
+            className="w-full bg-[#FFD000] border-2 border-black px-4 py-2 font-freeman text-sm hover:-translate-y-0.5 hover:-translate-x-0.5 brutal-shadow-center transition-all flex flex-col items-center justify-center"
+          >
+            <span className="text-base">{copyAgentSuccess ? 'Copied!' : 'Copy CLI Instructions'}</span>
+            <span className="text-xs opacity-80 mt-0.5">for agent to buy</span>
+          </button>
         </div>
 
         {showEditForm && isOwner && (
