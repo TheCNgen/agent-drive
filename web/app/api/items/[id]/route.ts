@@ -1,32 +1,28 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
 import { deleteFileByUrl, generatePresignedReadUrl, extractKeyFromUrl } from '@/app/lib/gcs';
 import { AIChunk } from '@/app/models/AIChunk';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
-import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 
 
 export async function GET(
   request: NextRequest,
 ){
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
+    await connectDB();
+    const principal = await requirePrincipal(request, 'items:read');
+
     const id = request.nextUrl.pathname.split("/")[3]
 
-    await connectDB();
-
-    const item = await Item.findOne({ 
-      _id: id, 
-      owner: session.user.id 
+    const item = await Item.findOne({
+      _id: id,
+      owner: principal.userId
     });
-    
+
     if (!item) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
@@ -47,6 +43,8 @@ export async function GET(
     return NextResponse.json(itemObj);
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('GET /api/items/[id] error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
@@ -54,12 +52,11 @@ export async function GET(
 
 export async function PUT(request: NextRequest) {
   const dbSession = await mongoose.startSession();
-  
+
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await connectDB();
+    const principal = await requirePrincipal(request, 'items:write');
+    const userId = principal.userId;
 
     const id = request.nextUrl.pathname.split("/")[3];
     const contentType = request.headers.get('content-type');
@@ -81,23 +78,21 @@ export async function PUT(request: NextRequest) {
       parentId = body.parentId;
     }
 
-    await connectDB();
-
     return await dbSession.withTransaction(async () => {
-      const item = await Item.findOne({ 
-        _id: id, 
-        owner: session.user.id 
+      const item = await Item.findOne({
+        _id: id,
+        owner: userId
       }).session(dbSession);
-      
+
       if (!item) {
         throw new Error('Item not found');
       }
 
       if (parentId !== undefined && parentId !== item.parentId) {
         if (parentId) {
-          const parentFolder = await Item.findOne({ 
-            _id: parentId, 
-            owner: session.user.id 
+          const parentFolder = await Item.findOne({
+            _id: parentId,
+            owner: userId
           }).session(dbSession);
           
           if (!parentFolder || parentFolder?.type !== 'folder') {
@@ -123,8 +118,10 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('PUT /api/items/[id] error:', error);
-    
+
     if (error.message === 'Item not found') {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
@@ -142,27 +139,25 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const dbSession = await mongoose.startSession();
-  
+
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await connectDB();
+    const principal = await requirePrincipal(request, 'items:write');
+    const userId = principal.userId;
 
     const id = request.nextUrl.pathname.split("/")[3];
-    await connectDB();
 
     return await dbSession.withTransaction(async () => {
-      const item = await Item.findOne({ 
-        _id: id, 
-        owner: session.user.id 
+      const item = await Item.findOne({
+        _id: id,
+        owner: userId
       }).session(dbSession);
-      
+
       if (!item) {
         throw new Error('Item not found');
       }
 
-      const itemsToDelete = await collectItemsToDeleteWithSession(id, session.user.id, dbSession);
+      const itemsToDelete = await collectItemsToDeleteWithSession(id, userId, dbSession);
       
       const itemIds = itemsToDelete.map(item => item._id);
       await AIChunk.deleteMany({ item: { $in: itemIds } }).session(dbSession);
@@ -195,8 +190,10 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('DELETE /api/items/[id] error:', error);
-    
+
     if (error.message === 'Item not found') {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }

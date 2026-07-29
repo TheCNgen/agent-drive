@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/backend/authConfig';
 import connectDB from '@/app/lib/mongodb';
 import { Affiliate } from '@/app/models/Affiliate';
 import { Listing } from '@/app/models/Listing';
 import { SharedLink } from '@/app/models/SharedLink';
 import { nanoid } from 'nanoid';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
+    const principal = await requirePrincipal(request, 'affiliates:read');
+    const userId = principal.userId;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type'); // 'owned' or 'affiliate'
@@ -24,14 +21,14 @@ export async function GET(request: NextRequest) {
 
     let query = {};
     if (type === 'owned') {
-      query = { owner: session.user.id };
+      query = { owner: userId };
     } else if (type === 'affiliate') {
-      query = { affiliateUser: session.user.id };
+      query = { affiliateUser: userId };
     } else {
       query = {
         $or: [
-          { owner: session.user.id },
-          { affiliateUser: session.user.id }
+          { owner: userId },
+          { affiliateUser: userId }
         ]
       };
     }
@@ -58,6 +55,8 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Error fetching affiliates:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -65,10 +64,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await connectDB();
+    const principal = await requirePrincipal(request, 'affiliates:write');
 
     let { listingId, sharedLinkId, affiliateUserId, commissionRate } = await request.json();
 
@@ -81,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Commission rate must be between 0 and 100' }, { status: 400 });
     }
 
-    await connectDB();
+    const userId = principal.userId;
 
     let contentItem = null;
     let isOwnerCreatingAffiliate = false;
@@ -98,8 +95,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Affiliate program not enabled for this listing' }, { status: 400 });
       }
       
-      isOwnerCreatingAffiliate = contentItem.seller.toString() === session.user.id;
-      isUserBecomingAffiliate = affiliateUserId === session.user.id;
+      isOwnerCreatingAffiliate = contentItem.seller.toString() === userId;
+      isUserBecomingAffiliate = affiliateUserId === userId;
       
       // Either the owner is creating an affiliate OR the user is becoming an affiliate
       if (!isOwnerCreatingAffiliate && !isUserBecomingAffiliate) {
@@ -116,8 +113,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Shared link not found' }, { status: 404 });
       }
       
-      isOwnerCreatingAffiliate = contentItem.owner.toString() === session.user.id;
-      isUserBecomingAffiliate = affiliateUserId === session.user.id;
+      isOwnerCreatingAffiliate = contentItem.owner.toString() === userId;
+      isUserBecomingAffiliate = affiliateUserId === userId;
       
       // Either the owner is creating an affiliate OR the user is becoming an affiliate
       if (!isOwnerCreatingAffiliate && !isUserBecomingAffiliate) {
@@ -138,7 +135,7 @@ export async function POST(request: NextRequest) {
     // Determine the correct owner based on who is creating the affiliate
     const ownerId = isUserBecomingAffiliate 
       ? (listingId ? contentItem.seller : contentItem.owner) 
-      : session.user.id;
+      : userId;
 
     // Check if affiliate already exists
     const existingAffiliate = await Affiliate.findOne({
@@ -181,6 +178,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ affiliate }, { status: 201 });
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Error creating affiliate:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

@@ -1,20 +1,17 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { Transaction } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
 import mongoose from 'mongoose';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const dbSession = await mongoose.startSession();
-  
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
+  try {
     await connectDB();
+    const principal = await requirePrincipal(request, 'transactions:read');
+    const userId = principal.userId;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all';
@@ -26,15 +23,15 @@ export async function GET(request: NextRequest) {
 
     return await dbSession.withTransaction(async () => {
       let query: any = {};
-      
+
       if (type === 'purchases') {
-        query.buyer = session.user.id;
+        query.buyer = userId;
       } else if (type === 'sales') {
-        query.seller = session.user.id;
+        query.seller = userId;
       } else {
         query.$or = [
-          { buyer: session.user.id },
-          { seller: session.user.id }
+          { buyer: userId },
+          { seller: userId }
         ];
       }
 
@@ -70,7 +67,7 @@ export async function GET(request: NextRequest) {
       const transactionsWithType = transactions.map(transaction => ({
         ...transaction.toObject(),
         // Use the actual transactionType from the database, fall back to inferred type for legacy records
-        userRole: transaction.buyer._id.toString() === session.user.id ? 'buyer' : 'seller'
+        userRole: transaction.buyer._id.toString() === userId ? 'buyer' : 'seller'
       }));
 
       return NextResponse.json({
@@ -85,9 +82,11 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('GET /api/transactions error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   } finally {
     await dbSession.endSession();
   }
-} 
+}

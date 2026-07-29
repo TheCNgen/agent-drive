@@ -8,11 +8,11 @@ import {
   ChatMessage,
   ChatTool,
 } from "@/app/lib/ai/openaiClient";
-import { authOptions } from "@/app/lib/backend/authConfig";
 import { accessSharedLink } from "@/app/lib/frontend/sharedLinkFunctions";
 import { Transaction } from "@/app/lib/models";
 import connectDB from "@/app/lib/mongodb";
-import { getServerSession } from "next-auth/next";
+import { requirePrincipal } from "@/app/lib/backend/resolvePrincipal";
+import { principalErrorToResponse } from "@/app/lib/backend/errors";
 import { NextRequest, NextResponse } from "next/server";
 
 // Constants
@@ -435,10 +435,8 @@ async function handleGenerateContent(args: any, userId: string): Promise<Partial
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: MESSAGES.UNAUTHORIZED }, { status: 401 });
-    }
+    await connectDB();
+    const principal = await requirePrincipal(req, 'ai:invoke');
 
     const { message, chatHistory = [] } = await req.json();
     if (!message) {
@@ -455,7 +453,7 @@ export async function POST(req: NextRequest) {
     const aiMessage = response.choices[0].message;
 
     if (aiMessage.tool_calls?.length) {
-      const toolResults = await handleToolCalls(aiMessage.tool_calls, session.user.id);
+      const toolResults = await handleToolCalls(aiMessage.tool_calls, principal.userId);
       return NextResponse.json(toolResults);
     }
 
@@ -465,6 +463,8 @@ export async function POST(req: NextRequest) {
       canGenerate: false,
     });
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error(LOG_MESSAGES.API_ERROR, error);
     return NextResponse.json(
       { error: MESSAGES.CHAT_ERROR },

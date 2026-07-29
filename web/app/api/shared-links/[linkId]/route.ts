@@ -59,7 +59,7 @@ export async function POST(
   { params }: { params: Promise<{ linkId: string }> }
 ) {
   return withErrorHandler(async () => {
-    const userId = await withAuthCheck(request);
+    const userId = await withAuthCheck(request, 'sharedlinks:write');
     const { linkId } = await params;
     
     return await withTransaction(async (session) => {

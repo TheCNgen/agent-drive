@@ -1,4 +1,3 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { processFileForAI } from '@/app/lib/ai/aiService';
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
@@ -6,8 +5,9 @@ import { cleanupOrphanedFile, uploadFile, generatePresignedReadUrl, extractKeyFr
 import { submitHCSRecord } from '@/app/lib/hedera';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
-import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 
 export async function GET(request: Request) {
   try {
@@ -19,14 +19,12 @@ export async function GET(request: Request) {
 
     await connectDB();
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const principal = await requirePrincipal(request, 'items:read');
+    const userId = principal.userId;
 
-    let query: any = parentId 
-      ? { parentId, owner: session.user.id } 
-      : { _id: session.user.rootFolder };
+    let query: any = parentId
+      ? { parentId, owner: userId }
+      : { _id: principal.rootFolder };
 
     if (!parentId) {
       let items = await Item.find(query).lean();
@@ -64,7 +62,7 @@ export async function GET(request: Request) {
     if (parentId) {
       const parentFolder = await Item.findOne({ 
         _id: parentId, 
-        owner: session.user.id,
+        owner: userId,
         type: 'folder'
       });
       
@@ -79,7 +77,7 @@ export async function GET(request: Request) {
 
     const totalItems = await Item.countDocuments({
       parentId,
-      owner: session.user.id
+      owner: userId
     });
 
     let items = await Item.find(query)
@@ -122,6 +120,8 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Items GET API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
@@ -129,15 +129,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: NextRequest) {
   const dbSession = await mongoose.startSession();
-  
+
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await connectDB();
+    const principal = await requirePrincipal(request, 'items:write');
+    const userId = principal.userId;
+    const rootFolder = principal.rootFolder;
 
     const contentType = request.headers.get('content-type');
-    await connectDB();
 
     if (contentType?.includes('multipart/form-data')) {
       return await dbSession.withTransaction(async () => {
@@ -161,7 +160,7 @@ export async function POST(request: NextRequest) {
             throw new Error('Invalid parent folder');
           }
           
-          if (parentFolder.owner.toString() !== session.user.id) {
+          if (parentFolder.owner.toString() !== userId) {
             throw new Error('Unauthorized access to parent folder');
           }
         }
@@ -177,7 +176,7 @@ export async function POST(request: NextRequest) {
 
           if (config.gcs.bucketName) {
             try {
-              uploadResult = await uploadFile(file, name, session.user.id);
+              uploadResult = await uploadFile(file, name, userId);
               fileUrl = uploadResult.url;
               fileSize = uploadResult.size;
             } catch (error) {
@@ -200,8 +199,8 @@ export async function POST(request: NextRequest) {
           const [item] = await Item.create([{
             name,
             type: 'file',
-            parentId: parentId || session.user.rootFolder,
-            owner: session.user.id,
+            parentId: parentId || rootFolder,
+            owner: userId,
             size: fileSize,
             mimeType: mimeType,
             url: fileUrl,
@@ -277,7 +276,7 @@ export async function POST(request: NextRequest) {
             throw new Error('Invalid parent folder');
           }
           
-          if (parentFolder.owner.toString() !== session.user.id) {
+          if (parentFolder.owner.toString() !== userId) {
             throw new Error('Unauthorized access to parent folder');
           }
         }
@@ -286,8 +285,8 @@ export async function POST(request: NextRequest) {
           const [item] = await Item.create([{
             name,
             type: 'folder',
-            parentId: parentId || session.user.rootFolder,
-            owner: session.user.id,
+            parentId: parentId || rootFolder,
+            owner: userId,
           }], { session: dbSession });
 
           return NextResponse.json(item, { status: 201 });
@@ -298,13 +297,16 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
+
     console.error('API Error:', error);
-    
+
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    if (error.message.includes('Name is required') || 
+
+    if (error.message.includes('Name is required') ||
         error.message.includes('Either file or URL must be provided') ||
         error.message.includes('Invalid parent folder') ||
         error.message.includes('Invalid type')) {

@@ -16,7 +16,7 @@ function generateLinkId(): string {
 
 export async function GET(request: NextRequest) {
   return withErrorHandler(async () => {
-    const userId = await withAuthCheck(request);
+    const userId = await withAuthCheck(request, 'sharedlinks:read');
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   return withErrorHandler(async () => {
-    const userId = await withAuthCheck(request);
+    const userId = await withAuthCheck(request, 'sharedlinks:write');
     const { itemId, type, price, title, description, expiresAt } = await request.json();
     
     if (!itemId || !type || !title) {

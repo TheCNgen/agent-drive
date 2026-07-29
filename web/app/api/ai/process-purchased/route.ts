@@ -1,8 +1,8 @@
 import { processFileForAI } from '@/app/lib/ai/aiService';
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { Item, Transaction } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Constants
@@ -223,20 +223,18 @@ function validateRequest(request: ProcessPurchasedRequest): void {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: MESSAGES.UNAUTHORIZED }, { status: 401 });
-    }
-
     await connectDB();
+    const principal = await requirePrincipal(request, 'ai:invoke');
 
     const requestData: ProcessPurchasedRequest = await request.json();
     validateRequest(requestData);
 
-    const response = await handleProcessPurchased(requestData, session.user.id);
+    const response = await handleProcessPurchased(requestData, principal.userId);
     return NextResponse.json(response);
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error(LOG_MESSAGES.PROCESSING_ERROR, error);
     return NextResponse.json(
       { error: MESSAGES.PROCESSING_ERROR },

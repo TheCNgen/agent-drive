@@ -9,6 +9,8 @@ import { Transaction } from '@/app/models/Transaction';
 import User from '@/app/models/User';
 import { Affiliate } from '@/app/models/Affiliate';
 import { Commission } from '@/app/models/Commission';
+import { Agent, ALL_SCOPES, DEFAULT_SCOPES } from '@/app/models/Agent';
+import { AgentClaim } from '@/app/models/AgentClaim';
 
 // Export all models for convenience
 export {
@@ -19,6 +21,11 @@ export {
     Transaction,
     User,
     Affiliate,
-    Commission
+    Commission,
+    Agent,
+    AgentClaim,
+    ALL_SCOPES,
+    DEFAULT_SCOPES
 };
+export type { Scope } from '@/app/models/Agent';
 

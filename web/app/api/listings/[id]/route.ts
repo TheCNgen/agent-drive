@@ -108,7 +108,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   return withErrorHandler(async () => {
-    const userId = await withAuthCheck(request);
+    const userId = await withAuthCheck(request, 'listings:write');
     const params = await context.params;
     const body = await request.json();
     const { title, description, priceTinybars, status, tags } = body as ListingUpdateData;
@@ -161,7 +161,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   return withErrorHandler(async () => {
-    const userId = await withAuthCheck(request);
+    const userId = await withAuthCheck(request, 'listings:write');
     const params = await context.params;
     
     return await withTransaction(async (session) => {

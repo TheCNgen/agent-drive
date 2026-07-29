@@ -1,7 +1,7 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import connectDB from '@/app/lib/mongodb';
 import { Item } from '@/app/models/Item';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Constants
@@ -120,15 +120,15 @@ async function handleStatsRequest(userId: string): Promise<AIStatsResponse> {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: MESSAGES.UNAUTHORIZED }, { status: 401 });
-    }
+    await connectDB();
+    const principal = await requirePrincipal(req, 'ai:invoke');
 
-    const stats = await handleStatsRequest(session.user.id);
+    const stats = await handleStatsRequest(principal.userId);
     return NextResponse.json(stats);
 
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error(LOG_MESSAGES.API_ERROR, error);
     return NextResponse.json(
       { error: MESSAGES.STATS_ERROR },

@@ -1,8 +1,8 @@
 import { Transaction } from "@/app/models/Transaction";
 import connectDB from "@/app/lib/mongodb";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/app/lib/backend/authConfig";
+import { requirePrincipal } from "@/app/lib/backend/resolvePrincipal";
+import { principalErrorToResponse } from "@/app/lib/backend/errors";
 import { Types } from "mongoose";
 
 const isValidObjectId = (id: string): boolean => {
@@ -14,15 +14,9 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
     await connectDB();
+    const principal = await requirePrincipal(request, 'listings:read');
+
     const params = await context.params;
     const { id } = params;
 
@@ -36,7 +30,7 @@ export async function GET(
     // Check if user has a completed transaction for this listing
     const transaction = await Transaction.findOne({
       listing: id,
-      buyer: session.user.id,
+      buyer: principal.userId,
       status: 'completed'
     });
 
@@ -48,6 +42,8 @@ export async function GET(
       } : null
     });
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error("GET /api/listings/[id]/purchase-status error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to check purchase status" },

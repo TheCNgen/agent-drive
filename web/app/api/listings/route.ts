@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   return withErrorHandler(async () => {
-    const userId = await withAuthCheck(request);
+    const userId = await withAuthCheck(request, 'listings:write');
     
     const body = await request.json();
     const { itemId, title, description, priceTinybars, tags, affiliateEnabled } = body;

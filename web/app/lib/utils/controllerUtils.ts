@@ -1,8 +1,9 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import connectDB from '@/app/lib/mongodb';
 import mongoose, { PopulateOptions, SortOrder } from 'mongoose';
-import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
+import type { Scope } from '@/app/models/Agent';
 
 type PopulateArg = string | PopulateOptions | { path: string } | (string | PopulateOptions | { path: string })[];
 
@@ -74,7 +75,10 @@ export async function withErrorHandler(
     return await handler();
   } catch (error: any) {
     console.error('API error:', error);
-    
+
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
+
     const defaultErrorMap: Record<string, number> = {
       'not found': 404,
       'expired': 410,
@@ -97,12 +101,9 @@ export async function withErrorHandler(
   }
 }
 
-export async function withAuthCheck(request: NextRequest): Promise<string> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    throw new Error('Unauthorized');
-  }
-  return session.user.id;
+export async function withAuthCheck(request: NextRequest, scope?: Scope): Promise<string> {
+  const principal = await requirePrincipal(request, scope);
+  return principal.userId;
 }
 
 export async function withTransaction<T>(

@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/backend/authConfig';
 import connectDB from '@/app/lib/mongodb';
 import { Affiliate } from '@/app/models/Affiliate';
 import { Commission } from '@/app/models/Commission';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
+    const principal = await requirePrincipal(request, 'affiliates:read');
 
     const { id } = await params;
     const affiliate = await Affiliate.findById(id)
@@ -29,8 +25,8 @@ export async function GET(
     }
 
     // Check if user has access to this affiliate
-    const hasAccess = affiliate.owner._id.toString() === session.user.id || 
-                     affiliate.affiliateUser._id.toString() === session.user.id;
+    const hasAccess = affiliate.owner._id.toString() === principal.userId ||
+                     affiliate.affiliateUser._id.toString() === principal.userId;
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -38,6 +34,8 @@ export async function GET(
 
     return NextResponse.json({ affiliate });
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Error fetching affiliate:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -48,14 +46,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await connectDB();
+    const principal = await requirePrincipal(request, 'affiliates:write');
 
     const { commissionRate, status } = await request.json();
-
-    await connectDB();
 
     const { id } = await params;
     const affiliate = await Affiliate.findById(id);
@@ -64,7 +58,7 @@ export async function PUT(
     }
 
     // Only owner can update commission rate and status
-    if (affiliate.owner.toString() !== session.user.id) {
+    if (affiliate.owner.toString() !== principal.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -92,6 +86,8 @@ export async function PUT(
 
     return NextResponse.json({ affiliate });
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Error updating affiliate:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -102,14 +98,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await connectDB();
+    await requirePrincipal(request, 'affiliates:write');
 
     const { action, commissionId, status, paidAt } = await request.json();
-
-    await connectDB();
 
     if (action === 'updateCommission' && commissionId) {
       // Update commission record
@@ -135,6 +127,8 @@ export async function PATCH(
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Error updating commission:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -145,12 +139,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
+    const principal = await requirePrincipal(request, 'affiliates:write');
 
     const { id } = await params;
     const affiliate = await Affiliate.findById(id);
@@ -159,7 +149,7 @@ export async function DELETE(
     }
 
     // Only owner can delete affiliate
-    if (affiliate.owner.toString() !== session.user.id) {
+    if (affiliate.owner.toString() !== principal.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -167,6 +157,8 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Affiliate deleted successfully' });
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Error deleting affiliate:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

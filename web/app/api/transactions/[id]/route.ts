@@ -1,7 +1,7 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { Transaction } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -9,13 +9,9 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
-    
+    const principal = await requirePrincipal(request, 'transactions:read');
+
     const params = await context.params;
     const transaction = await Transaction.findById(params.id)
       .populate('listing', 'title price status')
@@ -27,8 +23,8 @@ export async function GET(
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
-    const isBuyer = transaction.buyer._id.toString() === session.user.id;
-    const isSeller = transaction.seller._id.toString() === session.user.id;
+    const isBuyer = transaction.buyer._id.toString() === principal.userId;
+    const isSeller = transaction.seller._id.toString() === principal.userId;
 
     if (!isBuyer && !isSeller) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -42,6 +38,8 @@ export async function GET(
     return NextResponse.json(transactionWithType);
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('GET /api/transactions/[id] error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -1,10 +1,10 @@
 import { generateAndSaveContent, searchUserContent } from '@/app/lib/ai/aiService';
 import { chatCompletion, ChatMessage } from '@/app/lib/ai/openaiClient';
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { Transaction } from '@/app/lib/models';
 import { SharedLink } from '@/app/models/SharedLink';
 import connectDB from '@/app/lib/mongodb';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Constants
@@ -329,34 +329,33 @@ async function handleActualGeneration(
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: MESSAGES.UNAUTHORIZED }, { status: 401 });
-    }
-
     await connectDB();
+    const principal = await requirePrincipal(req, 'ai:invoke');
+
     const request: GenerationRequest = await req.json();
 
     if (!request.prompt) {
       return NextResponse.json({ error: MESSAGES.PROMPT_REQUIRED }, { status: 400 });
     }
 
-    const sourcesUsed = await buildSourcesInfo(request.sourceQuery, session.user.id);
+    const sourcesUsed = await buildSourcesInfo(request.sourceQuery, principal.userId);
 
     if (request.preview) {
-      const response = await handlePreviewGeneration(request, sourcesUsed, session.user.id);
+      const response = await handlePreviewGeneration(request, sourcesUsed, principal.userId);
       return NextResponse.json(response);
     } else {
       const response = await handleActualGeneration(
-        request, 
-        sourcesUsed, 
-        session.user.id, 
-        session.user.name || undefined
+        request,
+        sourcesUsed,
+        principal.userId,
+        principal.name || undefined
       );
       return NextResponse.json(response);
     }
 
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error(LOG_MESSAGES.GENERATION_ERROR, error);
     return NextResponse.json(
       { error: MESSAGES.GENERATION_ERROR },

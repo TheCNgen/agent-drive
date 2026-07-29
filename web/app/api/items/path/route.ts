@@ -1,7 +1,7 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import connectDB from '@/app/lib/mongodb';
 import { Item } from '@/app/models/Item';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -9,12 +9,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const itemId = searchParams.get('itemId');
 
-    const userSession = await getServerSession(authOptions);
-    
-    if (!userSession?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
+    await connectDB();
+    const principal = await requirePrincipal(request, 'items:read');
+
     if (!itemId) {
       return NextResponse.json(
         { error: 'Item ID is required' },
@@ -22,13 +19,11 @@ export async function GET(request: Request) {
       );
     }
 
-    await connectDB();
-
-    const targetItem = await Item.findOne({ 
-      _id: itemId, 
-      owner: userSession.user.id 
+    const targetItem = await Item.findOne({
+      _id: itemId,
+      owner: principal.userId
     });
-    
+
     if (!targetItem) {
       return NextResponse.json({ error: 'Item not found or unauthorized' }, { status: 404 });
     }
@@ -37,11 +32,11 @@ export async function GET(request: Request) {
     let currentId = itemId;
 
     while (currentId) {
-      const item = await Item.findOne({ 
-        _id: currentId, 
-        owner: userSession.user.id 
+      const item = await Item.findOne({
+        _id: currentId,
+        owner: principal.userId
       });
-      
+
       if (!item) break;
 
       path.unshift({
@@ -50,13 +45,15 @@ export async function GET(request: Request) {
         type: item?.type
       });
 
-      if (item._id.toString() === userSession.user.rootFolder?.toString()) break;
+      if (item._id.toString() === principal.rootFolder?.toString()) break;
       currentId = item.parentId;
     }
 
     return NextResponse.json(path);
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Path API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }

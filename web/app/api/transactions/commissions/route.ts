@@ -1,21 +1,17 @@
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { Transaction } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
 import { Commission } from '@/app/models/Commission';
 import mongoose from 'mongoose';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const dbSession = await mongoose.startSession();
-  
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
+  try {
     await connectDB();
+    const principal = await requirePrincipal(request, 'transactions:read');
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -23,7 +19,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status'); // 'pending', 'paid', 'failed'
 
     return await dbSession.withTransaction(async () => {
-      const userId = session.user.id;
+      const userId = principal.userId;
       const skip = (page - 1) * limit;
 
       // Build commission query
@@ -130,9 +126,11 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('GET /api/transactions/commissions error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   } finally {
     await dbSession.endSession();
   }
-} 
+}

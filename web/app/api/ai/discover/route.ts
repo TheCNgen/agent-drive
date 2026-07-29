@@ -1,8 +1,8 @@
 import { generateEmbedding } from '@/app/lib/ai/openaiClient';
-import { authOptions } from '@/app/lib/backend/authConfig';
 import { Listing, Transaction } from '@/app/lib/models';
 import connectDB from '@/app/lib/mongodb';
-import { getServerSession } from 'next-auth/next';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Constants
@@ -291,12 +291,8 @@ async function processListings(
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: MESSAGES.UNAUTHORIZED }, { status: 401 });
-    }
-
     await connectDB();
+    const principal = await requirePrincipal(request, 'ai:invoke');
 
     const { query, contentType, suggestedTitle, maxResults = DEFAULT_VALUES.MAX_RESULTS }: DiscoveryRequest = await request.json();
 
@@ -309,15 +305,15 @@ export async function POST(request: NextRequest) {
 
     // Get user's purchased item IDs to exclude from results
     const userTransactions = await Transaction.find({
-      buyer: session.user.id,
+      buyer: principal.userId,
       status: 'completed'
     }).select('item');
     const purchasedItemIds = userTransactions.map((t: any) => t.item);
 
     // Fetch all active listings with items (excluding user's own listings and already purchased items)
-    const listings = await Listing.find({ 
+    const listings = await Listing.find({
       status: 'active',
-      seller: { $ne: session.user.id },
+      seller: { $ne: principal.userId },
       item: { $nin: purchasedItemIds }
     }).populate('seller', 'name')
       .populate('item', 'name type mimeType');
@@ -352,6 +348,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error(LOG_MESSAGES.API_ERROR, error);
     return NextResponse.json(
       { error: MESSAGES.DISCOVERY_ERROR },

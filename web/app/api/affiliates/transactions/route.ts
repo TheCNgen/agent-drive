@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/backend/authConfig';
 import connectDB from '@/app/lib/mongodb';
 import { Commission } from '@/app/models/Commission';
 import { Transaction } from '@/app/models/Transaction';
 import mongoose from 'mongoose';
+import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
+import { principalErrorToResponse } from '@/app/lib/backend/errors';
 
 export async function GET(request: NextRequest) {
   const dbSession = await mongoose.startSession();
-  
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
+  try {
     await connectDB();
+    const principal = await requirePrincipal(request, 'affiliates:read');
+    const userId = principal.userId;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'earned'; // 'earned' or 'paid'
@@ -25,20 +22,20 @@ export async function GET(request: NextRequest) {
 
     return await dbSession.withTransaction(async () => {
       // Query for commissions where user is either the affiliate (earned) or the content owner (paid)
-      let query = type === 'earned' 
-        ? { 'affiliate.affiliateUser': session.user.id }
-        : { 'originalTransaction.seller': session.user.id };
+      let query = type === 'earned'
+        ? { 'affiliate.affiliateUser': userId }
+        : { 'originalTransaction.seller': userId };
 
       const [commissions, totals] = await Promise.all([
         Commission.find()
           .populate({
             path: 'affiliate',
-            match: type === 'earned' ? { affiliateUser: session.user.id } : {},
+            match: type === 'earned' ? { affiliateUser: userId } : {},
             populate: { path: 'affiliateUser', select: 'name email' }
           })
           .populate({
             path: 'originalTransaction',
-            match: type === 'paid' ? { seller: session.user.id } : {},
+            match: type === 'paid' ? { seller: userId } : {},
             populate: [
               { path: 'buyer', select: 'name email' },
               { path: 'seller', select: 'name email' }
@@ -69,8 +66,8 @@ export async function GET(request: NextRequest) {
           },
           {
             $match: type === 'earned'
-              ? { 'affiliate.affiliateUser': new mongoose.Types.ObjectId(session.user.id) }
-              : { 'originalTransaction.seller': new mongoose.Types.ObjectId(session.user.id) }
+              ? { 'affiliate.affiliateUser': new mongoose.Types.ObjectId(userId) }
+              : { 'originalTransaction.seller': new mongoose.Types.ObjectId(userId) }
           },
           {
             $group: {
@@ -114,9 +111,11 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
+    const principalResponse = principalErrorToResponse(error);
+    if (principalResponse) return principalResponse;
     console.error('Error fetching affiliate transactions:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   } finally {
     await dbSession.endSession();
   }
-} 
+}
