@@ -33,14 +33,20 @@ If the command was interrupted, resume with:
 
 ## After setup
 
-    import { CashDrive } from 'cash-drive';
-    const client = new CashDrive();          // reads ~/.cash-drive/config.json
+You can manage resources and purchases directly via the CLI:
 
-- \`client.items\` — browse and manage the operator's files
-- \`client.listings\` — browse the marketplace
-- \`client.listings.purchase(id)\` — buy a listing over x402 (requires the \`payments:spend\`
-  scope, which is off by default; your operator must grant it)
-- \`cash-drive whoami\` — check status, wallet, and balance
+- \`cash-drive whoami\` — check status, wallet, balance, and pending payments
+- \`cash-drive purchase <listing|link> <id> [--affiliate <code>]\` — buy a listing or shared link over x402 (requires the \`payments:spend\` scope, which is off by default; your operator must grant it)
+- \`cash-drive items <list|get|create-folder|upload|delete>\` — browse and manage the operator's files
+- \`cash-drive listings <list|get|create|delete>\` — browse and manage the marketplace
+- \`cash-drive links <list|create|claim>\` — manage shared links
+- \`cash-drive affiliates <list|create>\` — manage affiliate programs
+- \`cash-drive transactions <list|commissions|earnings>\` — view transaction history
+
+For programmatic access, you can also use the TypeScript SDK:
+    
+    import { CashDrive } from 'cash-drive';
+    const client = new CashDrive(); // reads ~/.cash-drive/config.json
 
 ## Safety
 

@@ -25,8 +25,7 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [purchaseLoading, setPurchaseLoading] = useState(false);
-  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [checkingPurchase, setCheckingPurchase] = useState(false);
   const [showAffiliateModal, setShowAffiliateModal] = useState(false);
@@ -89,64 +88,15 @@ export default function ListingDetailPage() {
     }
   };
 
-  const handlePurchase = async () => {
-    if (!session) {
-      alert('Please log in to purchase items');
-      return;
-    }
-
-    if (!session.user.wallet) {
-      alert('No wallet found. Please connect your wallet and try again.');
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to purchase "${listing?.title}" for ${formatHbar(listing?.priceTinybars || '0')}?`)) {
-      return;
-    }
-
+  const handleCopyAgentInstructions = async () => {
     try {
-      setPurchaseLoading(true);
-      console.log('Attempting purchase with wallet:', session.user.wallet);
-      const result = await purchaseListing(listingId, session.user.wallet as `0x${string}`, affiliateCode || undefined);
-      console.log("Purchase result:", result);
-
-      if (!result?.transactionData) {
-        throw new Error('Invalid transaction data received');
-      }
-
-      const { transaction, copiedItem, paymentDetails } = result.transactionData;
-
-      if (!transaction || !transaction.item) {
-        throw new Error('Invalid transaction data structure');
-      }
-
-      setPurchaseSuccess(true);
-
-      // Create detailed success message with blockchain info
-      let successMessage = `🎉 Purchase Successful!\n\n`;
-      successMessage += `📄 Item: ${transaction.item.name}\n`;
-      successMessage += `💰 Amount: ${formatHbar(transaction.amountTinybars)}\n`;
-      successMessage += `📋 Receipt: ${transaction.receiptNumber}\n`;
-
-      if (copiedItem?.path) {
-        successMessage += `📁 File Location: ${copiedItem.path}\n\n`;
-      }
-
-      if (paymentDetails) {
-        successMessage += `🔗 Blockchain Details:\n`;
-        successMessage += `• Network: ${paymentDetails.network}\n`;
-        successMessage += `• Transaction: ${paymentDetails.transaction.slice(0, 20)}...\n`;
-        successMessage += `• Status: ${paymentDetails.success ? 'Confirmed' : 'Pending'}\n\n`;
-        successMessage += `View full details in your transaction history.`;
-      }
-
-      alert(successMessage);
+      const command = `cash-drive purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
+      await navigator.clipboard.writeText(command);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
     } catch (err: any) {
-      console.error('Purchase error:', err);
-      alert(err.message || 'Purchase failed. Please try again.');
-      setPurchaseSuccess(false);
-    } finally {
-      setPurchaseLoading(false);
+      console.error('Copy error:', err);
+      alert('Failed to copy instructions. Please copy this manually: ' + `cash-drive purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`);
     }
   };
 
@@ -363,20 +313,14 @@ export default function ListingDetailPage() {
 
                 {/* Actions */}
                 <div className="space-y-2">
-                  {!isOwner && listing.status === 'active' && !purchaseSuccess && !alreadyPurchased && !checkingPurchase && (
+                  {!isOwner && listing.status === 'active' && !alreadyPurchased && !checkingPurchase && (
                     <button
-                      onClick={handlePurchase}
-                      disabled={purchaseLoading}
-                      className="button-primary bg-primary w-full py-3 px-4 text-sm font-freeman"
+                      onClick={handleCopyAgentInstructions}
+                      className="button-primary bg-primary w-full py-2 px-3 font-freeman flex flex-col items-center justify-center transition-all"
                     >
-                      {purchaseLoading ? 'Processing Purchase...' : `Purchase for ${formatHbar(listing.priceTinybars)}`}
+                      <span className="text-base">{copySuccess ? 'Copied!' : 'Copy CLI Instructions'}</span>
+                      <span className="text-xs opacity-80 mt-0.5">for agent to buy</span>
                     </button>
-                  )}
-
-                  {purchaseSuccess && (
-                    <div className="bg-green-100 border-2 border-black p-4 font-freeman text-sm brutal-shadow-left">
-                      ✅ Purchase completed! File added to your marketplace folder.
-                    </div>
                   )}
 
                   {alreadyPurchased && (

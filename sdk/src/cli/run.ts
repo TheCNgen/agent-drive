@@ -2,6 +2,12 @@ import { onboardCommand } from "./commands/onboard.js";
 import { whoamiCommand } from "./commands/whoami.js";
 import { logoutCommand } from "./commands/logout.js";
 import { paymentsCommand } from "./commands/payments.js";
+import { purchaseCommand } from "./commands/purchase.js";
+import { itemsCommand } from "./commands/items.js";
+import { listingsCommand } from "./commands/listings.js";
+import { sharedLinksCommand } from "./commands/sharedLinks.js";
+import { affiliatesCommand } from "./commands/affiliates.js";
+import { transactionsCommand } from "./commands/transactions.js";
 import { versionCommand, helpCommand } from "./commands/version.js";
 import { reportError, writeStderr } from "./output.js";
 
@@ -80,12 +86,24 @@ export async function run(argv: string[]): Promise<number> {
         return await logoutCommand(flags, json);
       case "payments":
         return await paymentsCommand(positionals[0], flags, json);
+      case "purchase":
+        return await purchaseCommand(positionals[0], positionals[1], flags, json);
+      case "items":
+        return await itemsCommand(positionals[0], positionals.slice(1), flags, json);
+      case "listings":
+        return await listingsCommand(positionals[0], positionals.slice(1), flags, json);
+      case "links":
+        return await sharedLinksCommand(positionals[0], positionals.slice(1), flags, json);
+      case "affiliates":
+        return await affiliatesCommand(positionals[0], positionals.slice(1), flags, json);
+      case "transactions":
+        return await transactionsCommand(positionals[0], positionals.slice(1), flags, json);
       case "version":
         return versionCommand();
       case "help":
         return helpCommand();
       case undefined:
-        writeStderr("Usage: cash-drive <onboard|whoami|logout|payments|version> [flags]. Run with --help for details.");
+        writeStderr("Usage: cash-drive <onboard|whoami|logout|payments|purchase|items|listings|links|affiliates|transactions|version> [flags]. Run with --help for details.");
         return 2;
       default:
         writeStderr(`Unknown command "${command}". Run with --help for details.`);
