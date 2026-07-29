@@ -90,13 +90,16 @@ export default function ListingDetailPage() {
 
   const handleCopyAgentInstructions = async () => {
     try {
-      const command = `cash-drive purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
-      await navigator.clipboard.writeText(command);
+      const cliCommand = `cash-drive purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
+      const instructions = `Run this command to purchase "${listing?.title}":\n\n    ${cliCommand}`;
+      
+      await navigator.clipboard.writeText(instructions);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err: any) {
       console.error('Copy error:', err);
-      alert('Failed to copy instructions. Please copy this manually: ' + `cash-drive purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`);
+      const cliCommand = `cash-drive purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
+      alert('Failed to copy instructions. Please copy this manually:\n\n' + cliCommand);
     }
   };
 
