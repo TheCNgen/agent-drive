@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ISharedLink extends Document {
-  _id: string;
   item: mongoose.Types.ObjectId;
   owner: mongoose.Types.ObjectId;
   linkId: string;

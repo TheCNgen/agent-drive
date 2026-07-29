@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ICommission extends Document {
-  _id: string;
   affiliate: mongoose.Types.ObjectId;
   originalTransaction: mongoose.Types.ObjectId;
   commissionTransaction: mongoose.Types.ObjectId;

@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ITransaction extends Document {
-  _id: string;
   listing?: mongoose.Types.ObjectId;
   sharedLink?: mongoose.Types.ObjectId;
   buyer: mongoose.Types.ObjectId;

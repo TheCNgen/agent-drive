@@ -11,6 +11,7 @@ import type { DashboardSummary } from '@/app/lib/agents/types';
 import FilesTab from './_components/tabs/FilesTab';
 import AgentsTab from './_components/tabs/AgentsTab';
 import AuditTab from './_components/tabs/AuditTab';
+import { DashboardCard } from '../components/ui/DashboardCard';
 
 function DashboardContent() {
   const router = useRouter();
@@ -46,6 +47,8 @@ function DashboardContent() {
             DASHBOARD
           </h2>
         </div>
+        
+        <DashboardCard />
         
         {!isAIOpen && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

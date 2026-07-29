@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_HOST_NAME: process.env.NEXT_PUBLIC_HOST_NAME,
   },
+  serverExternalPackages: ['@mistralai/mistralai'],
   images: {
     remotePatterns: [
       {

@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IAIChunk extends Document {
-  _id: string;
   item: mongoose.Types.ObjectId;
   text: string;
   embedding: number[];

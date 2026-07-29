@@ -3,7 +3,6 @@ import mongoose, { Document, Schema } from "mongoose";
 export const DEFAULT_COMMISSION_RATE = 10;
 
 export interface IAffiliate extends Document {
-  _id: string;
   listing?: mongoose.Types.ObjectId;
   sharedLink?: mongoose.Types.ObjectId;
   owner: mongoose.Types.ObjectId;

@@ -59,7 +59,7 @@ export default function ClaimCommandBlock({ claimCode, expiresAt, onExpired, onR
         </div>
       </div>
       <p className="text-sm text-gray-500 font-freeman">
-        Paste this into your agent's chat. The code expires in {formatCountdown(msRemaining)} and works once.
+        Paste this into your agent&apos;s chat. The code expires in {formatCountdown(msRemaining)} and works once.
       </p>
     </div>
   );

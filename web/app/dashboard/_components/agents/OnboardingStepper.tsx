@@ -72,7 +72,7 @@ export default function OnboardingStepper({ agentId, onRegenerate, onActive }: O
                 <div className="ml-9 pl-4 border-l-2 border-gray-200">
                   {step.key === 'handshake' && <p className="text-sm">Waiting for the agent to run the command…</p>}
                   {step.key === 'claimed' && <p className="text-sm">API key issued to the agent.</p>}
-                  {step.key === 'wallet' && <p className="text-sm">Generating a local wallet on the agent's host…</p>}
+                  {step.key === 'wallet' && <p className="text-sm">Generating a local wallet on the agent&apos;s host…</p>}
                   {step.key === 'deposit' && state.evmAddress && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 font-mono text-sm bg-gray-100 p-2 border-2 border-black">
@@ -82,7 +82,7 @@ export default function OnboardingStepper({ agentId, onRegenerate, onActive }: O
                       <p className="text-sm">
                         Send at least 1 ℏ to activate this wallet. We suggest {formatHbarWithUnit(state.suggestedFundingTinybars)} to leave working balance for purchases.
                       </p>
-                      <p className="text-xs text-gray-500">Hedera testnet · the private key never leaves the agent's machine.</p>
+                      <p className="text-xs text-gray-500">Hedera testnet · the private key never leaves the agent&apos;s machine.</p>
                     </div>
                   )}
                   {step.key === 'funded' && (
