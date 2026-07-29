@@ -24,6 +24,10 @@ export interface RequestOptions {
   /** Set false to forbid retries even for GET/HEAD, e.g. one-shot state transitions. */
   retry?: boolean | undefined;
   signal?: AbortSignal | undefined;
+  /** Extra headers merged in after Accept/Content-Type/auth, so they can override auth-derived defaults. */
+  headers?: Record<string, string> | undefined;
+  /** Overrides the client's default timeout for this one request (e.g. known-slow reports). */
+  timeoutMs?: number | undefined;
 }
 
 function joinUrl(baseUrl: string, apiPrefix: string, path: string, query?: QueryParams): URL {
@@ -45,27 +49,33 @@ export class HttpClient {
     const policy = this.config.retryPolicy ?? DEFAULT_RETRY_POLICY;
     const canRetry = (options.retry ?? true) && isRetryableMethod(method);
     const maxAttempts = canRetry ? Math.max(1, this.config.maxRetries) : 1;
+    const timeoutMs = options.timeoutMs ?? this.config.timeoutMs;
+    const isFormBody = typeof FormData !== "undefined" && body instanceof FormData;
 
     let lastError: unknown;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const controller = new AbortController();
       const onOuterAbort = () => controller.abort();
       signal?.addEventListener("abort", onOuterAbort);
-      const timer = setTimeout(() => controller.abort(), this.config.timeoutMs);
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       let res: Response;
       try {
         const headers = new Headers({ Accept: "application/json" });
-        if (body !== undefined) headers.set("Content-Type", "application/json");
+        // Never set Content-Type for a FormData body — fetch needs to add its own boundary.
+        if (body !== undefined && !isFormBody) headers.set("Content-Type", "application/json");
         if (this.config.auth) await this.config.auth.prepare(headers);
+        if (options.headers) {
+          for (const [key, value] of Object.entries(options.headers)) headers.set(key, value);
+        }
 
         const init: RequestInit = { method, headers, signal: controller.signal };
-        if (body !== undefined) init.body = JSON.stringify(body);
+        if (body !== undefined) init.body = isFormBody ? (body as FormData) : JSON.stringify(body);
         res = await this.config.fetchImpl(url, init);
       } catch (err) {
         const aborted = err instanceof Error && err.name === "AbortError";
         if (aborted) {
-          throw new TimeoutError(`Request timed out after ${this.config.timeoutMs}ms.`, { method, path });
+          throw new TimeoutError(`Request timed out after ${timeoutMs}ms.`, { method, path });
         }
         const networkError = new NetworkError(
           err instanceof Error ? err.message : "Network request failed.",

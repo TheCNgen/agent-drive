@@ -16,6 +16,8 @@ export {
   ActivationError,
   NotFoundError,
   ConflictError,
+  GoneError,
+  PaymentRequiredError,
   ServerError,
   NetworkError,
   TimeoutError,

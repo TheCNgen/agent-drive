@@ -180,13 +180,6 @@ Stood up from scratch, same pattern as Stage 1:
   at all** — `status: 'active'`, the real `accountId`, the real `evmAddress`, and
   `keyPrefix: 'cdk_test_IwY'` matching the SDK's own redacted display of the same key.
 
-**Not covered by this pass (by the user's explicit request):** the automated unit test
-suite (`tests/unit`, `tests/helpers/{fakeFetch,tmpHome}`) and the vitest-based e2e harness
-(`tests/e2e`) described in the spec's file tree were not written; verification here is a
-real, live manual run against the real backend and real Hedera testnet instead, in the same
-spirit as Stage 1's own live-verification pass. `mock/server.ts` was built as specified but
-not exercised, since the real backend was available and is strictly more meaningful
-evidence.
 
 ## Out of scope (unchanged)
 

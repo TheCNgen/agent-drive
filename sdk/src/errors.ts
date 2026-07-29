@@ -71,7 +71,7 @@ export class InsufficientScopeError extends CashDriveError {
   constructor(requiredScope?: string, options: CashDriveErrorOptions = {}) {
     super(
       requiredScope
-        ? `This agent lacks the required scope "${requiredScope}" for this action.`
+        ? `This agent lacks the \`${requiredScope}\` scope.`
         : "This agent lacks the required scope for this action.",
       "insufficient_scope",
       options,
@@ -101,6 +101,18 @@ export class NotFoundError extends CashDriveError {
 export class ConflictError extends CashDriveError {
   constructor(message = "Conflict.", options: CashDriveErrorOptions = {}) {
     super(message, "conflict", options);
+  }
+}
+
+export class GoneError extends CashDriveError {
+  constructor(message = "This resource is gone.", options: CashDriveErrorOptions = {}) {
+    super(message, "gone", options);
+  }
+}
+
+export class PaymentRequiredError extends CashDriveError {
+  constructor(message = "Payment is required to access this resource.", options: CashDriveErrorOptions = {}) {
+    super(message, "payment_required", options);
   }
 }
 
@@ -173,6 +185,10 @@ export function errorFromApiResponse(
       return new NotFoundError(message, base);
     case "conflict":
       return new ConflictError(message, base);
+    case "gone":
+      return new GoneError(message, base);
+    case "payment_required":
+      return new PaymentRequiredError(message, base);
     case "server_error":
       return new ServerError(message, base);
     default:
@@ -187,6 +203,8 @@ export function errorFromApiResponse(
   if (status === 403) return new InsufficientScopeError(undefined, base);
   if (status === 404) return new NotFoundError(message, base);
   if (status === 409) return new ConflictError(message, base);
+  if (status === 410) return new GoneError(message, base);
+  if (status === 402) return new PaymentRequiredError(message, base);
   if (status === 400) return new ValidationError(message ?? "The request was invalid.", base);
   if (status >= 500) return new ServerError(message, base);
   return new CashDriveError(message ?? `Request failed with status ${status}.`, "unknown_error", base);

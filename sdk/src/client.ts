@@ -3,6 +3,11 @@ import { ApiKeyAuth } from "./auth/apiKey.js";
 import { resolveConnection } from "./config.js";
 import { resolveLogger } from "./core/logger.js";
 import { AgentResource } from "./resources/agent.js";
+import { ItemsResource } from "./resources/items.js";
+import { ListingsResource } from "./resources/listings.js";
+import { SharedLinksResource } from "./resources/sharedLinks.js";
+import { AffiliatesResource } from "./resources/affiliates.js";
+import { TransactionsResource } from "./resources/transactions.js";
 import type { Logger, LogLevel } from "./types/common.js";
 
 export interface CashDriveOptions {
@@ -21,12 +26,25 @@ const DEFAULT_MAX_RETRIES = 3;
 
 export class CashDrive {
   readonly agent: AgentResource;
+  readonly items: ItemsResource;
+  readonly listings: ListingsResource;
+  readonly sharedLinks: SharedLinksResource;
+  readonly affiliates: AffiliatesResource;
+  readonly transactions: TransactionsResource;
   private readonly options: CashDriveOptions;
+  private readonly logger: Logger;
   private httpClientPromise: Promise<HttpClient> | undefined;
 
   constructor(options: CashDriveOptions = {}) {
     this.options = options;
-    this.agent = new AgentResource(() => this.getHttpClient());
+    this.logger = resolveLogger(options.logger);
+    const getHttp = (): Promise<HttpClient> => this.getHttpClient();
+    this.agent = new AgentResource(getHttp);
+    this.items = new ItemsResource(getHttp);
+    this.listings = new ListingsResource(getHttp);
+    this.sharedLinks = new SharedLinksResource(getHttp);
+    this.affiliates = new AffiliatesResource(getHttp, this.logger);
+    this.transactions = new TransactionsResource(getHttp, this.logger);
   }
 
   private getHttpClient(): Promise<HttpClient> {
@@ -50,7 +68,7 @@ export class CashDrive {
       fetchImpl: this.options.fetch ?? globalThis.fetch,
       timeoutMs: this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       maxRetries: this.options.maxRetries ?? DEFAULT_MAX_RETRIES,
-      logger: resolveLogger(this.options.logger),
+      logger: this.logger,
       auth: new ApiKeyAuth(connection.apiKey),
     });
   }
