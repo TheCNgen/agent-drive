@@ -1,3 +1,4 @@
+'use client';
 import { useState } from 'react';
 
 export default function AgentDangerZone({ agent, onClose, onRefetchList }: { agent: any, onClose: () => void, onRefetchList: () => void }) {

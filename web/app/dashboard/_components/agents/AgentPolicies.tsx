@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 
 export default function AgentPolicies({ agent }: { agent: any }) {
