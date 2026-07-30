@@ -79,7 +79,7 @@ export default function AuditTab() {
                     {new Date(log.timestamp).toLocaleString()}
                   </p>
                   <a 
-                    href={`https://hashscan.io/testnet/topic/message/${log.consensusTimestamp}`}
+                    href={`https://hashscan.io/testnet/transaction/${log.consensusTimestamp}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-freeman text-xs text-blue-600 hover:underline inline-block mt-1"
