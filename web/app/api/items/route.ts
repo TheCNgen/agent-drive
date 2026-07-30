@@ -1,4 +1,3 @@
-import { processFileForAI } from '@/app/lib/ai/aiService';
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
 import { cleanupOrphanedFile, uploadFile, generatePresignedReadUrl, extractKeyFromUrl } from '@/app/lib/gcs';
@@ -206,34 +205,10 @@ export async function POST(request: NextRequest) {
             url: fileUrl,
           }], { session: dbSession });
 
-          const shouldProcessAI = mimeType && [
-            'text/plain', 
-            'application/pdf', 
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          ].includes(mimeType);
-
-          if (shouldProcessAI) {
-            await Item.findByIdAndUpdate(
-              item._id, 
-              { 'aiProcessing.queued': true, 'aiProcessing.queuedAt': new Date() },
-              { session: dbSession }
-            );
-          }
-
           const itemId = item._id.toString();
           
           const response = NextResponse.json(item, { status: 201 });
 
-          if (shouldProcessAI) {
-            setTimeout(async () => {
-              try {
-                await processFileForAI(itemId);
-              } catch (error) {
-                console.error('AI processing failed for file:', item.name, error);
-              }
-            }, 1000); // 1 second delay
-          }
-          
           // Submit HCS record synchronously
           await submitHCSRecord('ITEM_CREATED', {
             itemId: itemId,

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import AIOverlay from '../components/AI/AIOverlay';
-import FloatingAIBot from '../components/AI/FloatingAIBot';
+
 import FooterPattern from '../components/global/FooterPattern';
 import { formatHbarWithUnit, formatBytes } from '@/app/lib/agents/format';
 import type { DashboardSummary } from '@/app/lib/agents/types';
@@ -18,7 +17,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get('tab') || 'files';
   
-  const [isAIOpen, setIsAIOpen] = useState(false);
+
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
 
   useEffect(() => {
@@ -31,9 +30,6 @@ function DashboardContent() {
       })
       .catch(console.error);
   }, []);
-
-  const toggleAI = () => setIsAIOpen(!isAIOpen);
-  const closeAI = () => setIsAIOpen(false);
 
   const handleTabChange = (tab: string) => {
     router.replace(`?tab=${tab}`);
@@ -54,7 +50,6 @@ function DashboardContent() {
         
         <DashboardCard />
         
-        {!isAIOpen && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-4 text-center">
               <h3 className="font-anton text-2xl">{summary ? summary.agents.total : '—'}</h3>
@@ -84,7 +79,6 @@ function DashboardContent() {
               )}
             </div>
           </div>
-        )}
 
         {/* Tabs Bar */}
         <div className="flex border-2 border-black bg-white mb-6">
@@ -109,7 +103,7 @@ function DashboardContent() {
         </div>
 
         {/* Tab Panel */}
-        <div className={`transition-all duration-300 ${isAIOpen ? 'mt-0' : ''}`}>
+        <div className={`transition-all duration-300`}>
           {activeTab === 'files' && <FilesTab />}
           {activeTab === 'agents' && <AgentsTab />}
           {activeTab === 'audit' && <AuditTab />}
@@ -119,8 +113,7 @@ function DashboardContent() {
       <FooterPattern design={1} className='w-[80vw] bottom-0 right-0' />
       <FooterPattern design={1} className='w-[80vw] top-0 left-0 -scale-100' />
       
-      <FloatingAIBot onToggle={toggleAI} isOpen={isAIOpen} />
-      <AIOverlay isOpen={isAIOpen} onClose={closeAI} />
+
     </>
   );
 }

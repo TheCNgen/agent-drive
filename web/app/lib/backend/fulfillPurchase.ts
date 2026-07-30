@@ -1,4 +1,3 @@
-import { processFileForAI } from '@/app/lib/ai/aiService';
 import { submitHCSRecord } from '@/app/lib/hedera';
 import { Item, SharedLink, Transaction, User } from '@/app/lib/models';
 import { copyItemWithBFS } from '@/app/lib/utils/itemUtils';
@@ -162,9 +161,8 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
 
     try {
       await Item.findByIdAndUpdate(copiedItem._id, { contentSource: 'marketplace_purchase' });
-      await processFileForAI(copiedItem._id.toString());
     } catch (processError) {
-      console.error('Error auto-processing purchased content for AI:', processError);
+      console.error('Error auto-processing purchased content:', processError);
     }
   } else {
     await SharedLink.findByIdAndUpdate(doc._id, { $addToSet: { paidUsers: buyerId } });

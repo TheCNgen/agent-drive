@@ -13,37 +13,16 @@ export interface Item {
   content?: string;
   createdAt: Date;
   updatedAt: Date;
-  // AI processing fields
-  aiProcessing?: {
-    status: 'none' | 'pending' | 'processing' | 'completed' | 'failed';
-    textContent?: string;
-    processedAt?: Date;
-    topics?: string[];
-    chunksCount?: number;
-  };
+
   
   contentSource?: 'user_upload' | 'ai_generated' | 'marketplace_purchase' | 'shared_link';
 
-  aiGeneration?: {
-    sourcePrompt: string;
-    sourceFiles?: string[];
-    generatedAt?: Date;
-  };
+
 
   parent?: string;
   path: string;
-  generatedBy?: 'ai' | 'user';
 }
 
-export interface AIChunk {
-  _id: string;
-  item: string;
-  text: string;
-  embedding: number[];
-  chunkIndex: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export interface User {
   _id: string;

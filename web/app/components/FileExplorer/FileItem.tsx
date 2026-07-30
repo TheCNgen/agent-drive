@@ -44,8 +44,7 @@ export const FileItem = ({ item, onItemClick, onListToMarketplace, onShareItem, 
     onDeleteItem?.(item);
   };
 
-  // Only show AI Ready badge for completed processing
-  const isAIReady = item.aiProcessing?.status === 'completed';
+
 
   return (
     <>
@@ -71,12 +70,6 @@ export const FileItem = ({ item, onItemClick, onListToMarketplace, onShareItem, 
                 <span className="font-freeman text-xs px-2 py-0.5 bg-white border-2 border-black brutal-shadow-center">
                   {item?.type}
                 </span>
-                {isAIReady && (
-                  <span className="font-freeman text-xs px-2 py-0.5 bg-green-100 border-2 border-black brutal-shadow-center flex items-center gap-1">
-                    <FaRobot className="w-3 h-3" />
-                    AI Ready
-                  </span>
-                )}
               </div>
             </div>
 
@@ -84,12 +77,6 @@ export const FileItem = ({ item, onItemClick, onListToMarketplace, onShareItem, 
             <div className="flex items-center gap-3 flex-1">
               <div className="text-3xl flex-shrink-0 relative">
                 <IconComponent className="w-8 h-8" />
-                {/* AI Generated Badge on icon */}
-                {item.generatedBy === 'ai' && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 border border-black rounded-full flex items-center justify-center">
-                    <FaRobot className="w-2 h-2 text-white" />
-                  </div>
-                )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-freeman truncate text-sm">{item.name}</div>

@@ -1,7 +1,6 @@
 import { config } from '@/app/lib/config';
 import connectDB from '@/app/lib/mongodb';
 import { deleteFileByUrl, generatePresignedReadUrl, extractKeyFromUrl } from '@/app/lib/gcs';
-import { AIChunk } from '@/app/models/AIChunk';
 import { Item } from '@/app/models/Item';
 import mongoose from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
@@ -160,8 +159,7 @@ export async function DELETE(request: NextRequest) {
       const itemsToDelete = await collectItemsToDeleteWithSession(id, userId, dbSession);
       
       const itemIds = itemsToDelete.map(item => item._id);
-      await AIChunk.deleteMany({ item: { $in: itemIds } }).session(dbSession);
-      
+
       const s3DeletionPromises = [];
       if (config.gcs.bucketName) {
         for (const itemToDelete of itemsToDelete) {
