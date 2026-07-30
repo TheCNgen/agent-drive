@@ -91,7 +91,7 @@ export default function ListingDetailPage() {
   const handleCopyAgentInstructions = async () => {
     try {
       const purchaseCmd = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
-      const instructions = `To purchase and download "${listing?.title}":\n\n1. Buy it:\n    ${purchaseCmd}\n\n2. Find the new item ID:\n    npx -y cash-drive@latest items list\n\n3. Download it:\n    npx -y cash-drive@latest items download <item_id>`;
+      const instructions = `To purchase and download "${listing?.title}":\n\n1. Buy it:\n    ${purchaseCmd}\n\n2. Find your marketplace folder ID:\n    npx -y cash-drive@latest items list\n\n3. Find the new item ID inside that folder:\n    npx -y cash-drive@latest items list --parent <marketplace_folder_id>\n\n4. Download it:\n    npx -y cash-drive@latest items download <item_id>`;
       
       await navigator.clipboard.writeText(instructions);
       setCopySuccess(true);

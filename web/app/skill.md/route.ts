@@ -37,7 +37,7 @@ You can manage resources and purchases directly via the CLI:
 
 - \`cash-drive whoami\` — check status, wallet, balance, and pending payments
 - \`cash-drive purchase <listing|link> <id> [--affiliate <code>]\` — buy a listing or shared link over x402
-- \`cash-drive items <list|get|create-folder|upload|delete|download>\` — browse and manage the operator's files (use \`cash-drive items download <id> [path]\` to download)
+- \`cash-drive items <list|get|create-folder|upload|delete|download>\` — browse and manage the operator's files. (Note: Purchased files are saved in a marketplace folder, not the root. Use \`cash-drive items list\` to find the folder ID, then \`cash-drive items list --parent <folder_id>\` to find your item ID, then \`cash-drive items download <id> [path]\` to download).
 - \`cash-drive listings <list|get|create|delete>\` — browse and manage the marketplace
 - \`cash-drive links <list|create|claim>\` — manage shared links
 - \`cash-drive affiliates <list|create>\` — manage affiliate programs
