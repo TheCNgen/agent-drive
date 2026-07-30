@@ -10,6 +10,9 @@ export default function AgentPolicies({ agent }: { agent: any }) {
   const [orderVal, setOrderVal] = useState('5');
   const [approvalLimit, setApprovalLimit] = useState(false);
   const [approvalVal, setApprovalVal] = useState('20');
+  
+  const [scopes, setScopes] = useState<string[]>([]);
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -19,6 +22,9 @@ export default function AgentPolicies({ agent }: { agent: any }) {
       if (agent.spendingLimits.monthlyLimitHbar !== null) { setMonthlyLimit(true); setMonthlyVal(agent.spendingLimits.monthlyLimitHbar.toString()); }
       if (agent.spendingLimits.orderLimitHbar !== null) { setOrderLimit(true); setOrderVal(agent.spendingLimits.orderLimitHbar.toString()); }
       if (agent.spendingLimits.approvalLimitHbar !== null) { setApprovalLimit(true); setApprovalVal(agent.spendingLimits.approvalLimitHbar.toString()); }
+    }
+    if (agent?.scopes) {
+      setScopes(agent.scopes);
     }
   }, [agent]);
 
@@ -35,7 +41,8 @@ export default function AgentPolicies({ agent }: { agent: any }) {
             monthlyLimitHbar: monthlyLimit ? Number(monthlyVal) : null,
             orderLimitHbar: orderLimit ? Number(orderVal) : null,
             approvalLimitHbar: approvalLimit ? Number(approvalVal) : null,
-          }
+          },
+          scopes
         }),
       });
       setSaved(true);
@@ -104,7 +111,31 @@ export default function AgentPolicies({ agent }: { agent: any }) {
         </div>
       </div>
       
-      <div className="flex items-center gap-4">
+      <div className="space-y-3 font-freeman mt-6">
+        <h4 className="font-freeman text-lg font-bold mb-4">Capabilities (Scopes)</h4>
+        <div className="flex items-center justify-between border-b pb-2">
+          <div>
+            <div>Allow Purchases</div>
+            <div className="text-xs text-gray-500">Grants the <code>payments:spend</code> scope, allowing the agent to buy listings and shared links.</div>
+          </div>
+          <div className="flex items-center gap-4">
+            <input 
+              type="checkbox" 
+              checked={scopes.includes('payments:spend')} 
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setScopes([...scopes, 'payments:spend']);
+                } else {
+                  setScopes(scopes.filter(s => s !== 'payments:spend'));
+                }
+              }} 
+              className="w-5 h-5 accent-black" 
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-4 mt-6">
         <button onClick={handleSave} disabled={saving} className="bg-black text-white px-4 py-2 font-freeman hover:bg-gray-800 disabled:opacity-50">
           {saving ? 'Saving...' : 'Save Policies'}
         </button>

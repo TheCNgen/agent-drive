@@ -16,7 +16,7 @@ export const ALL_SCOPES = [
 
 export type Scope = typeof ALL_SCOPES[number];
 
-export const DEFAULT_SCOPES: Scope[] = ALL_SCOPES.filter((s) => s !== 'payments:spend') as Scope[];
+export const DEFAULT_SCOPES: Scope[] = [...ALL_SCOPES];
 
 const AgentSchema = new Schema(
   {

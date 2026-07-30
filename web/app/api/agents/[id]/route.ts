@@ -169,6 +169,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       };
     }
 
+    if (body.scopes && Array.isArray(body.scopes)) {
+      agent.scopes = body.scopes;
+    }
+
+
     await agent.save();
 
     return NextResponse.json({ success: true });

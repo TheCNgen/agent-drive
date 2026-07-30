@@ -36,7 +36,7 @@ If the command was interrupted, resume with:
 You can manage resources and purchases directly via the CLI:
 
 - \`cash-drive whoami\` — check status, wallet, balance, and pending payments
-- \`cash-drive purchase <listing|link> <id> [--affiliate <code>]\` — buy a listing or shared link over x402 (requires the \`payments:spend\` scope, which is off by default; your operator must grant it)
+- \`cash-drive purchase <listing|link> <id> [--affiliate <code>]\` — buy a listing or shared link over x402
 - \`cash-drive items <list|get|create-folder|upload|delete>\` — browse and manage the operator's files
 - \`cash-drive listings <list|get|create|delete>\` — browse and manage the marketplace
 - \`cash-drive links <list|create|claim>\` — manage shared links
