@@ -27,13 +27,15 @@ export async function affiliatesCommand(
       case "list":
         result = await client.affiliates.list();
         break;
-      case "create":
-        result = await client.affiliates.create({ 
-          listingId: flagString(flags, "listing"),
-          sharedLinkId: flagString(flags, "link"),
-          affiliateUserId: positionals[0]!
-        });
+      case "create": {
+        const listingId = flagString(flags, "listing");
+        const sharedLinkId = flagString(flags, "link");
+        const input: any = { affiliateUserId: positionals[0]! };
+        if (listingId) input.listingId = listingId;
+        if (sharedLinkId) input.sharedLinkId = sharedLinkId;
+        result = await client.affiliates.create(input);
         break;
+      }
       default:
         writeStderr(`Usage: cash-drive affiliates <list|create> [args]`);
         return 2;

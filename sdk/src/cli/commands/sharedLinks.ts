@@ -27,14 +27,16 @@ export async function sharedLinksCommand(
       case "list":
         result = await client.sharedLinks.list({ type: flagString(flags, "type") as any });
         break;
-      case "create":
+      case "create": {
+        const priceTinybars = flagString(flags, "price");
         result = await client.sharedLinks.create({ 
           itemId: positionals[0]!,
           type: (flagString(flags, "type") as any) || "public",
           title: flagString(flags, "title") || "Untitled",
-          priceTinybars: flagString(flags, "price")
+          ...(priceTinybars ? { priceTinybars } : {})
         });
         break;
+      }
       case "claim":
         result = await client.sharedLinks.claim(positionals[0]!);
         break;

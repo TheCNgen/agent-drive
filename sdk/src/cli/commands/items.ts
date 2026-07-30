@@ -24,24 +24,33 @@ export async function itemsCommand(
   try {
     let result: any;
     switch (subcommand) {
-      case "list":
-        result = await client.items.list({ parentId: flagString(flags, "parent") });
+      case "list": {
+        const parentId = flagString(flags, "parent");
+        result = await client.items.list(parentId ? { parentId } : {});
         break;
+      }
       case "get":
         result = await client.items.get(positionals[0]!);
         break;
-      case "create-folder":
-        result = await client.items.createFolder({ name: positionals[0]!, parentId: flagString(flags, "parent") });
+      case "create-folder": {
+        const parentId = flagString(flags, "parent");
+        result = await client.items.createFolder({ 
+          name: positionals[0]!, 
+          ...(parentId ? { parentId } : {}) 
+        });
         break;
-      case "upload":
+      }
+      case "upload": {
         const { fileFromPath } = await import("../../node.js");
         const file = await fileFromPath(positionals[0]!);
+        const parentIdUpload = flagString(flags, "parent");
         result = await client.items.upload({ 
           file, 
           name: positionals[1] || file.name, 
-          parentId: flagString(flags, "parent") 
+          ...(parentIdUpload ? { parentId: parentIdUpload } : {}) 
         });
         break;
+      }
       case "delete":
         result = await client.items.delete(positionals[0]!);
         break;

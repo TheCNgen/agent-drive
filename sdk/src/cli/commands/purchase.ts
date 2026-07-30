@@ -38,7 +38,7 @@ export async function purchaseCommand(
   try {
     if (targetType === "listing") {
       const result = await client.listings.purchase(targetId, {
-        affiliateCode,
+        ...(affiliateCode ? { affiliateCode } : {}),
         onQuote: (quote) => {
           if (!json) writeStdout(`Paying ${quote.priceTinybars} tinybars...`);
         },
@@ -53,7 +53,7 @@ export async function purchaseCommand(
       }
     } else {
       const result = await client.sharedLinks.purchaseAndClaim(targetId, {
-        affiliateCode,
+        ...(affiliateCode ? { affiliateCode } : {}),
         onQuote: (quote) => {
           if (!json) writeStdout(`Paying ${quote.priceTinybars} tinybars...`);
         },

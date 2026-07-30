@@ -34,7 +34,7 @@ export async function listingsCommand(
         result = await client.listings.create({ 
           itemId: positionals[0]!, 
           title: flagString(flags, "title") || "Untitled",
-          description: flagString(flags, "desc"),
+          description: flagString(flags, "desc") || "",
           priceTinybars: flagString(flags, "price") || "0",
           affiliateEnabled: flags["affiliate-enabled"] === true
         });
