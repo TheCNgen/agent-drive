@@ -99,7 +99,8 @@ export default function ListingDetailPage() {
     } catch (err: any) {
       console.error('Copy error:', err);
       const purchaseCmd = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
-      alert('Failed to copy instructions. Please instruct your agent to run:\n\n' + purchaseCmd);
+      const instructions = `To purchase and download "${listing?.title}":\n\n1. Buy it:\n    ${purchaseCmd}\n\n2. Find your marketplace folder ID:\n    npx -y cash-drive@latest items list\n\n3. Find the new item ID inside that folder:\n    npx -y cash-drive@latest items list --parent <marketplace_folder_id>\n\n4. Download it:\n    npx -y cash-drive@latest items download <item_id>`;
+      alert('Failed to copy instructions. Please instruct your agent to run:\n\n' + instructions);
     }
   };
 
