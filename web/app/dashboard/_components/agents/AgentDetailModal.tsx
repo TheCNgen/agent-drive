@@ -94,10 +94,10 @@ export default function AgentDetailModal({ agentId, isOpen, onClose, onRefetchLi
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div>
                     <h4 className="font-freeman text-lg font-bold mb-4">Spending Limits & Policies</h4>
-                    <AgentPolicies />
+                    <AgentPolicies agent={data.agent} />
                   </div>
                   <div>
-                    <AgentDangerZone />
+                    <AgentDangerZone agent={data.agent} onClose={onClose} onRefetchList={onRefetchList} />
                   </div>
                 </div>
               </div>

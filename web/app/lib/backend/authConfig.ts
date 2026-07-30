@@ -77,8 +77,7 @@ export const authOptions: AuthOptions = {
                 email: credentials.email,
                 password: credentials.password,
                 wallet: evmAddress,
-                accountId,
-                encryptedPrivateKey
+                accountId
               });
 
               const rootFolder = new Item({

@@ -84,7 +84,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
           purchasesSucceeded,
           purchasesFailed,
           successRate,
-        }
+        },
+        spendingLimits: agent.spendingLimits || {
+          dailyLimitHbar: null,
+          monthlyLimitHbar: null,
+          orderLimitHbar: null,
+          approvalLimitHbar: null,
+        },
       },
       wallet: {
         evmAddress: agent.evmAddress || null,
@@ -128,6 +134,46 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     return NextResponse.json({ revoked: true });
   } catch (error: any) {
     console.error('DELETE /api/agents/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error', code: 'server_error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'unauthenticated' }, { status: 401 });
+    }
+
+    await connectDB();
+    const { id } = await context.params;
+    const agent = await loadOwnedAgent(id, session.user.id);
+    if (!agent) {
+      return NextResponse.json({ error: 'Agent not found', code: 'not_found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+
+    if (body.status === 'suspended' && agent.status === 'active') {
+      agent.status = 'suspended';
+    } else if (body.status === 'active' && agent.status === 'suspended') {
+      agent.status = 'active';
+    }
+
+    if (body.spendingLimits) {
+      agent.spendingLimits = {
+        dailyLimitHbar: body.spendingLimits.dailyLimitHbar ?? null,
+        monthlyLimitHbar: body.spendingLimits.monthlyLimitHbar ?? null,
+        orderLimitHbar: body.spendingLimits.orderLimitHbar ?? null,
+        approvalLimitHbar: body.spendingLimits.approvalLimitHbar ?? null,
+      };
+    }
+
+    await agent.save();
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('PATCH /api/agents/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error', code: 'server_error' }, { status: 500 });
   }
 }

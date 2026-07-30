@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrincipalError, principalErrorToResponse } from '@/app/lib/backend/errors';
 import { requirePrincipal } from '@/app/lib/backend/resolvePrincipal';
 import connectDB from '@/app/lib/mongodb';
+import { Agent, Transaction } from '@/app/lib/models';
 import { fulfillPurchase } from './fulfillPurchase';
 import { PurchaseValidationError, type PurchaseQuote } from './purchaseQuote';
 import { FacilitatorError, getFeePayer, settle, verify } from './x402Facilitator';
@@ -58,6 +59,17 @@ export async function handleX402Purchase(
       throw new PrincipalError(401, 'unauthenticated', 'Bearer token required');
     }
 
+    const agent = await Agent.findById(principal.agentId);
+    if (!agent) {
+      throw new PrincipalError(401, 'unauthenticated', 'Agent not found');
+    }
+    if (agent.status === 'suspended') {
+      return NextResponse.json({ error: 'Agent is suspended', code: 'agent_suspended' }, { status: 403 });
+    }
+    if (agent.status !== 'active') {
+      return NextResponse.json({ error: 'Agent is not active', code: 'agent_inactive' }, { status: 403 });
+    }
+
     let affiliateCode: string | null = null;
     try {
       const body = await request.json();
@@ -76,6 +88,53 @@ export async function handleX402Purchase(
         return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
       }
       throw err;
+    }
+
+    // Enforce spending limits
+    if (agent.spendingLimits) {
+      const HBAR_TO_TINYBARS = BigInt(100_000_000);
+      const priceTinybars = BigInt(quote.priceTinybars);
+      const limits = agent.spendingLimits;
+
+      if (limits.orderLimitHbar !== null && priceTinybars > BigInt(limits.orderLimitHbar) * HBAR_TO_TINYBARS) {
+        return NextResponse.json({ error: `Price exceeds per-order limit of ${limits.orderLimitHbar} ℏ`, code: 'limit_exceeded' }, { status: 403 });
+      }
+
+      if (limits.approvalLimitHbar !== null && priceTinybars > BigInt(limits.approvalLimitHbar) * HBAR_TO_TINYBARS) {
+        return NextResponse.json({ error: `Purchases over ${limits.approvalLimitHbar} ℏ require approval`, code: 'approval_required' }, { status: 403 });
+      }
+
+      if (limits.dailyLimitHbar !== null || limits.monthlyLimitHbar !== null) {
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const recentTxs = await Transaction.find({
+          agent: agent._id,
+          status: 'completed',
+          paymentFlow: 'x402',
+          purchaseDate: { $gte: startOfMonth }
+        });
+
+        let dailySpent = BigInt(0);
+        let monthlySpent = BigInt(0);
+
+        for (const tx of recentTxs) {
+          const amt = BigInt(tx.amountTinybars || 0);
+          monthlySpent += amt;
+          if (tx.purchaseDate >= startOfDay) {
+            dailySpent += amt;
+          }
+        }
+
+        if (limits.dailyLimitHbar !== null && (dailySpent + priceTinybars) > BigInt(limits.dailyLimitHbar) * HBAR_TO_TINYBARS) {
+          return NextResponse.json({ error: `Purchase would exceed daily limit of ${limits.dailyLimitHbar} ℏ`, code: 'limit_exceeded' }, { status: 403 });
+        }
+
+        if (limits.monthlyLimitHbar !== null && (monthlySpent + priceTinybars) > BigInt(limits.monthlyLimitHbar) * HBAR_TO_TINYBARS) {
+          return NextResponse.json({ error: `Purchase would exceed monthly limit of ${limits.monthlyLimitHbar} ℏ`, code: 'limit_exceeded' }, { status: 403 });
+        }
+      }
     }
 
     const requirements = await buildPaymentRequirements(quote);

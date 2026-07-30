@@ -19,9 +19,11 @@ export async function purchaseFromMarketplace(wallet: string, id: string, affili
   
   // Find buyer by wallet (evmAddress or accountId)
   const buyerUser = await User.findOne({ wallet });
-  if (!buyerUser || !buyerUser.accountId || !buyerUser.privateKey) {
+  if (!buyerUser || !buyerUser.accountId) {
     throw new Error("Buyer not found or Hedera account missing");
   }
+
+  throw new Error("Only agents can make purchases directly on the platform now.");
 
   // Find listing
   const listing = await Listing.findById(id).populate('seller');
@@ -103,9 +105,11 @@ export async function purchaseMonetizedLink(wallet: string, id: string) {
   
   // Find buyer
   const buyerUser = await User.findOne({ wallet });
-  if (!buyerUser || !buyerUser.accountId || !buyerUser.privateKey) {
+  if (!buyerUser || !buyerUser.accountId) {
     throw new Error("Buyer not found or Hedera account missing");
   }
+
+  throw new Error("Only agents can make purchases directly on the platform now.");
 
   // Find shared link
   const link = await SharedLink.findById(id).populate('createdBy');

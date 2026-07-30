@@ -22,7 +22,7 @@ const AgentSchema = new Schema(
   {
     owner: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true, immutable: true },
     name: { type: String, required: true, trim: true, maxlength: 64 },
-    status: { type: String, enum: ['pending', 'active', 'revoked'], default: 'pending', index: true },
+    status: { type: String, enum: ['pending', 'active', 'suspended', 'revoked'], default: 'pending', index: true },
     scopes: { type: [String], default: () => [...DEFAULT_SCOPES] },
 
     keyHash: { type: String, default: null }, // SHA-256 hex of the API key
@@ -43,6 +43,13 @@ const AgentSchema = new Schema(
     activatedAt: { type: Date, default: null },
     lastSeenAt: { type: Date, default: null },
     revokedAt: { type: Date, default: null },
+
+    spendingLimits: {
+      dailyLimitHbar: { type: Number, default: null },
+      monthlyLimitHbar: { type: Number, default: null },
+      orderLimitHbar: { type: Number, default: null },
+      approvalLimitHbar: { type: Number, default: null },
+    },
   },
   { timestamps: true }
 );

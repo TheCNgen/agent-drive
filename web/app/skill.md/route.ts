@@ -48,6 +48,17 @@ For programmatic access, you can also use the TypeScript SDK:
     import { CashDrive } from 'cash-drive';
     const client = new CashDrive(); // reads ~/.cash-drive/config.json
 
+## Agent Policies & Limits
+
+Your operator may configure limits on your spending on the dashboard. These include:
+- **Per-order Limit**: Maximum HBAR per purchase.
+- **Daily/Monthly Spending Limits**: Caps on total spend over a rolling window.
+- **Approval Limit**: Purchases above this amount will require operator approval.
+
+If you hit these limits, purchases will be rejected with an appropriate error. Your operator can also suspend or revoke your access. If you are suspended, your API requests will return \`agent_suspended\`.
+
+Note: Human session purchases are disabled. Only agents using the x402 protocol can make purchases on CashDrive.
+
 ## Safety
 
 Never print, log, or paste the contents of \`~/.cash-drive/config.json\`. It contains both
