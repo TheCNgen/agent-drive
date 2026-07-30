@@ -4,6 +4,8 @@ import { Agent, Transaction, Item } from '@/app/lib/models';
 import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
 
+import mongoose from 'mongoose';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -12,19 +14,19 @@ export async function GET(request: NextRequest) {
     }
 
     await connectDB();
-    const userId = session.user.id;
+    const userIdObj = new mongoose.Types.ObjectId(session.user.id);
 
     const [agents, spend, files] = await Promise.all([
       Agent.aggregate([
-        { $match: { owner: userId } },
+        { $match: { owner: userIdObj } },
         { $group: { _id: '$status', count: { $sum: 1 } } }
       ]),
       Transaction.aggregate([
-        { $match: { buyer: userId, paymentFlow: 'x402', status: 'completed' } },
+        { $match: { buyer: userIdObj, paymentFlow: 'x402', status: 'completed' } },
         { $group: { _id: null, purchaseCount: { $sum: 1 }, totalTinybars: { $sum: { $toDecimal: '$amountTinybars' } } } }
       ]),
       Item.aggregate([
-        { $match: { owner: userId, type: 'file' } },
+        { $match: { owner: userIdObj, type: 'file' } },
         { $group: { _id: null, count: { $sum: 1 }, totalBytes: { $sum: '$size' } } }
       ])
     ]);

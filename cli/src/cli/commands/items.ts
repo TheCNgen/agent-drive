@@ -54,8 +54,21 @@ export async function itemsCommand(
       case "delete":
         result = await client.items.delete(positionals[0]!);
         break;
+      case "download": {
+        const item = await client.items.get(positionals[0]!);
+        if (!item.url) throw new Error("Item is not a file or has no download URL.");
+        const dest = positionals[1] || item.name;
+        const fs = await import("fs");
+        const fetchResponse = await fetch(item.url);
+        if (!fetchResponse.ok) throw new Error(`Failed to download: ${fetchResponse.statusText}`);
+        const arrayBuffer = await fetchResponse.arrayBuffer();
+        fs.writeFileSync(dest, Buffer.from(arrayBuffer));
+        result = { downloadedTo: dest };
+        if (!json) writeStdout(`Successfully downloaded to ${dest}`);
+        break;
+      }
       default:
-        writeStderr(`Usage: cash-drive items <list|get|create-folder|upload|delete> [args]`);
+        writeStderr(`Usage: cash-drive items <list|get|create-folder|upload|delete|download> [args]`);
         return 2;
     }
 

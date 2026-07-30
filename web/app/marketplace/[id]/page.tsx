@@ -90,16 +90,16 @@ export default function ListingDetailPage() {
 
   const handleCopyAgentInstructions = async () => {
     try {
-      const cliCommand = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
-      const instructions = `Run this command to purchase "${listing?.title}":\n\n    ${cliCommand}`;
+      const purchaseCmd = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
+      const instructions = `To purchase and download "${listing?.title}":\n\n1. Buy it:\n    ${purchaseCmd}\n\n2. Find the new item ID:\n    npx -y cash-drive@latest items list\n\n3. Download it:\n    npx -y cash-drive@latest items download <item_id>`;
       
       await navigator.clipboard.writeText(instructions);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err: any) {
       console.error('Copy error:', err);
-      const cliCommand = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
-      alert('Failed to copy instructions. Please copy this manually:\n\n' + cliCommand);
+      const purchaseCmd = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
+      alert('Failed to copy instructions. Please instruct your agent to run:\n\n' + purchaseCmd);
     }
   };
 
