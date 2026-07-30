@@ -37,11 +37,20 @@ You can manage resources and purchases directly via the CLI:
 
 - \`cash-drive whoami\` — check status, wallet, balance, and pending payments
 - \`cash-drive purchase <listing|link> <id> [--affiliate <code>]\` — buy a listing or shared link over x402
-- \`cash-drive items <list|get|create-folder|upload|delete|download>\` — browse and manage the operator's files. (Note: Purchased files are saved in a marketplace folder, not the root. Use \`cash-drive items list\` to find the folder ID, then \`cash-drive items list --parent <folder_id>\` to find your item ID, then \`cash-drive items download <id> [path]\` to download).
+- \`cash-drive items <list|get|create-folder|upload|delete|download>\` — browse and manage the operator's files
 - \`cash-drive listings <list|get|create|delete>\` — browse and manage the marketplace
 - \`cash-drive links <list|create|claim>\` — manage shared links
 - \`cash-drive affiliates <list|create>\` — manage affiliate programs
 - \`cash-drive transactions <list|commissions|earnings>\` — view transaction history
+
+### Purchasing and Downloading Files
+
+When instructed to purchase a file from the marketplace, it is placed in a special marketplace folder in your account, not the root. Follow these steps:
+
+1. **Purchase**: Run the purchase command (e.g. \`npx -y cash-drive@latest purchase listing <id>\`).
+2. **Find the Marketplace Folder ID**: Run \`npx -y cash-drive@latest items list\` to list the root directory. Look for the marketplace folder and copy its ID.
+3. **Find the Item ID**: Run \`npx -y cash-drive@latest items list --parent <marketplace_folder_id>\` to list the folder's contents and locate the ID of your newly purchased file.
+4. **Download**: Run \`npx -y cash-drive@latest items download <item_id> [destination_path]\` to download the file to your workspace.
 
 For programmatic access, you can also use the TypeScript SDK:
     
