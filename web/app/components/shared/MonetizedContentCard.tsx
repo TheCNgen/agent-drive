@@ -62,7 +62,7 @@ export default function MonetizedContentCard({
           </span> */}
           {content?.type === 'monetized' && content?.priceTinybars && (
             <span className="font-freeman bg-green-200 text-green-600 border-2 border-green-600 px-3 py-1">
-              {formatHbar(content?.priceTinybars)}
+              {formatHbar(content?.priceTinybars)} ℏ
             </span>
           )}
         </div>

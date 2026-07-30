@@ -240,7 +240,7 @@ export default function ListingDetailPage() {
                   {listing.status.toUpperCase()}
                 </span>
                 <span className="text-2xl font-freeman">
-                  {formatHbar(listing.priceTinybars)}
+                  {formatHbar(listing.priceTinybars)} ℏ
                 </span>
               </div>
             </div>
