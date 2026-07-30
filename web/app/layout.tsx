@@ -3,10 +3,7 @@ import { Anton } from "next/font/google";
 import "./globals.css";
 import { Provider } from "./utils/providers/Provider";
 
-import { WalletComp } from "./components/wallet/walletComp";
-
 import { FileViewer } from "./components/FileViewer";
-
 
 // const anton = Anton({
 //   variable: "--font-anton",
@@ -19,7 +16,6 @@ export const metadata: Metadata = {
   description: "Earn money by monetizing your content using our Drive Links",
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,11 +23,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={` antialiased text-black `}
-      >
+      <body className={` antialiased text-black `}>
         <Provider>
-          <WalletComp/>
           {children}
           <FileViewer />
         </Provider>
