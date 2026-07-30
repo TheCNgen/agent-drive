@@ -91,7 +91,7 @@ export default function ListingDetailPage() {
   const handleCopyAgentInstructions = async () => {
     try {
       const cliCommand = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
-      const instructions = `Run this command to purchase "${listing?.title}":\n\n    ${cliCommand}`;
+      const instructions = `Please purchase and download "${listing?.title}" to my workspace using this command:\n\n    ${cliCommand}`;
       
       await navigator.clipboard.writeText(instructions);
       setCopySuccess(true);
@@ -99,7 +99,8 @@ export default function ListingDetailPage() {
     } catch (err: any) {
       console.error('Copy error:', err);
       const cliCommand = `npx -y cash-drive@latest purchase listing ${listingId}${affiliateCode ? ` --affiliate ${affiliateCode}` : ''}`;
-      alert('Failed to copy instructions. Please instruct your agent to run:\n\n' + cliCommand);
+      const instructions = `Please purchase and download "${listing?.title}" to my workspace using this command:\n\n    ${cliCommand}`;
+      alert('Failed to copy instructions. Please instruct your agent to run:\n\n' + instructions);
     }
   };
 
