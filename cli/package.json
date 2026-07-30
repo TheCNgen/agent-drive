@@ -1,6 +1,6 @@
 {
   "name": "cash-drive",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CashDrive SDK and CLI for AI agents",
   "license": "MIT",
   "type": "module",
