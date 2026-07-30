@@ -5,6 +5,7 @@ import type { Scope } from '@/app/models/Agent';
 import { generateClaimCode, sha256Hex, CLAIM_CODE_TTL_MS } from '@/app/lib/backend/agentKeys';
 import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
+import { submitHCSRecord } from '@/app/lib/hedera';
 
 function serializeAgentSummary(agent: any) {
   return {
@@ -58,6 +59,12 @@ export async function POST(request: NextRequest) {
       agent: agent._id,
       codeHash: sha256Hex(code),
       expiresAt,
+    });
+
+    await submitHCSRecord('AGENT_CREATED', {
+      agentId: agent._id.toString(),
+      owner: session.user.id,
+      name: agent.name
     });
 
     return NextResponse.json(
