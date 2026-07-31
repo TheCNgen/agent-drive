@@ -39,6 +39,7 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
         name: { label: "Name", type: "text" },
+        payoutWallet: { label: "Payout Wallet", type: "text" },
         isRegistration: { label: "Is Registration", type: "hidden" }
       },
       async authorize(credentials): Promise<CustomUser | null> {
@@ -54,9 +55,13 @@ export const authOptions: AuthOptions = {
           if (!credentials.name) {
             throw new Error('Name is required for registration');
           }
+          if (!credentials.payoutWallet) {
+            throw new Error('Payout Wallet is required for registration');
+          }
 
           const existing = await User.findOne({ email: credentials.email });
           if (existing) throw new Error("User already exists with this email");
+
 
           console.log("Creating Hedera account for user...");
           const { accountId, encryptedPrivateKey, evmAddress } = await createHederaAccount();
@@ -76,6 +81,7 @@ export const authOptions: AuthOptions = {
                 name: credentials.name,
                 email: credentials.email,
                 password: credentials.password,
+                payoutWallet: credentials.payoutWallet,
                 wallet: evmAddress,
                 accountId
               });

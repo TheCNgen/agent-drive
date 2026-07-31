@@ -22,12 +22,14 @@ export default function SignUpForm() {
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const payoutWallet = formData.get('payoutWallet') as string;
 
     try {
       const result = await signIn('credentials', {
         email,
         password,
         name,
+        payoutWallet,
         isRegistration: 'true',
         redirect: false,
       });
@@ -99,6 +101,17 @@ export default function SignUpForm() {
                 required
                 className="w-full px-3 py-2 bg-white border-2 border-black font-freeman focus:outline-none focus:border-primary brutal-shadow-center"
                 placeholder="Enter your email"
+              />
+            </div>
+            <div>
+              <label htmlFor="payoutWallet" className="font-freeman block mb-2">Hedera EVM Address (Payout Wallet)</label>
+              <input
+                id="payoutWallet"
+                name="payoutWallet"
+                type="text"
+                required
+                className="w-full px-3 py-2 bg-white border-2 border-black font-mono focus:outline-none focus:border-primary brutal-shadow-center"
+                placeholder="0x..."
               />
             </div>
             <div>

@@ -10,6 +10,7 @@ import type { DashboardSummary } from '@/app/lib/agents/types';
 import FilesTab from './_components/tabs/FilesTab';
 import AgentsTab from './_components/tabs/AgentsTab';
 import AuditTab from './_components/tabs/AuditTab';
+import SettingsTab from './_components/tabs/SettingsTab';
 import { DashboardCard } from '../components/ui/DashboardCard';
 
 function DashboardContent() {
@@ -96,9 +97,15 @@ function DashboardContent() {
           </button>
           <button
             onClick={() => handleTabChange('audit')}
-            className={`flex-1 px-6 py-3 font-freeman ${activeTab === 'audit' ? 'bg-[#FFD000]' : 'bg-white hover:bg-gray-50'}`}
+            className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${activeTab === 'audit' ? 'bg-[#FFD000]' : 'bg-white hover:bg-gray-50'}`}
           >
             Audit
+          </button>
+          <button
+            onClick={() => handleTabChange('settings')}
+            className={`flex-1 px-6 py-3 font-freeman ${activeTab === 'settings' ? 'bg-[#FFD000]' : 'bg-white hover:bg-gray-50'}`}
+          >
+            Settings
           </button>
         </div>
 
@@ -107,6 +114,7 @@ function DashboardContent() {
           {activeTab === 'files' && <FilesTab />}
           {activeTab === 'agents' && <AgentsTab />}
           {activeTab === 'audit' && <AuditTab />}
+          {activeTab === 'settings' && <SettingsTab />}
         </div>
       </main>
       

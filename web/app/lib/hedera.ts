@@ -93,3 +93,41 @@ export async function submitHCSRecord(event: string, payload: any): Promise<stri
     return "";
   }
 }
+
+export async function allocateTreasuryFunds(
+  sellerWallet: string,
+  affiliateWallet: string | null | undefined,
+  sellerAmountTinybars: bigint,
+  affiliateAmountTinybars: bigint
+): Promise<string> {
+  const contractId = config.payments.treasuryContractId;
+  if (!contractId) {
+    throw new Error('Treasury contract ID not configured');
+  }
+
+  const { ContractExecuteTransaction, ContractFunctionParameters } = await import('@hiero-ledger/sdk');
+
+  const client = getHederaClient();
+  const safeAffiliateWallet = affiliateWallet || '0x0000000000000000000000000000000000000000';
+
+  const transaction = new ContractExecuteTransaction()
+    .setContractId(contractId)
+    .setGas(250000)
+    .setFunction(
+      'allocate',
+      new ContractFunctionParameters()
+        .addAddress(sellerWallet)
+        .addAddress(safeAffiliateWallet)
+        .addUint256(sellerAmountTinybars)
+        .addUint256(affiliateAmountTinybars)
+    );
+
+  try {
+    const txResponse = await transaction.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    return txResponse.transactionId.toString();
+  } catch (error) {
+    console.error("Failed to allocate treasury funds:", error);
+    throw error;
+  }
+}

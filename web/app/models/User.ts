@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false, // Make optional for backwards compatibility
   },
+  payoutWallet: {
+    type: String,
+    required: false, // The external EVM address for non-custodial payouts
+  },
   kmsKeyVersion: {
     type: String,
     required: false,

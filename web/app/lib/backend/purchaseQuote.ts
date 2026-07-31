@@ -40,6 +40,7 @@ export interface PurchaseQuote {
   resolvedAffiliate: ResolvedAffiliate | null;
   payTo: string;
   sellerAccountId: string;
+  sellerPayoutWallet: string;
 }
 
 /** Mirrors `sdk/src/utils/hbar.ts`'s `percentOfTinybars` - separate packages, same integer-floor formula. */
@@ -48,7 +49,7 @@ function percentOfTinybars(value: bigint, percent: number): bigint {
 }
 
 function treasuryAccountId(): string {
-  const account = config.payments.treasuryAccountId;
+  const account = config.payments.treasuryContractId || config.payments.treasuryAccountId;
   if (!account) {
     throw new PurchaseValidationError(500, 'server_error', 'Platform fee account not configured.');
   }
@@ -73,7 +74,7 @@ async function resolveAffiliate(
   const record = await Affiliate.findOne(query).populate('affiliateUser');
   const affiliateUser = record?.affiliateUser;
   const eligible =
-    !!record && !!affiliateUser && !!affiliateUser.accountId && affiliateUser._id.toString() !== buyerId;
+    !!record && !!affiliateUser && !!affiliateUser.payoutWallet && affiliateUser._id.toString() !== buyerId;
 
   if (!eligible) {
     return { resolved: null, summary: { applied: false, code: affiliateCode } };
@@ -102,8 +103,8 @@ export async function quoteListingPurchase(
   if (listing.seller._id.toString() === buyerId) {
     throw new PurchaseValidationError(400, 'bad_request', 'You cannot purchase your own listing.');
   }
-  if (!listing.seller.accountId) {
-    throw new PurchaseValidationError(400, 'bad_request', 'Seller Hedera account not found.');
+  if (!listing.seller.payoutWallet) {
+    throw new PurchaseValidationError(400, 'bad_request', 'Seller has not configured a payout wallet.');
   }
 
   const existing = await Transaction.exists({ listing: listingId, buyer: buyerId, status: 'completed' });
@@ -138,6 +139,7 @@ export async function quoteListingPurchase(
     resolvedAffiliate: resolved,
     payTo: treasuryAccountId(),
     sellerAccountId: listing.seller.accountId,
+    sellerPayoutWallet: listing.seller.payoutWallet,
   };
 }
 
@@ -160,6 +162,10 @@ export async function quoteSharedLinkPurchase(
   if (sharedLink.owner._id.toString() === buyerId) {
     throw new PurchaseValidationError(400, 'bad_request', 'You cannot purchase your own content.');
   }
+  if (!sharedLink.owner.payoutWallet) {
+    throw new PurchaseValidationError(400, 'bad_request', 'Owner has not configured a payout wallet.');
+  }
+
   if (!sharedLink.owner.accountId) {
     throw new PurchaseValidationError(400, 'bad_request', 'Seller Hedera account not found.');
   }
@@ -199,5 +205,6 @@ export async function quoteSharedLinkPurchase(
     resolvedAffiliate: resolved,
     payTo: treasuryAccountId(),
     sellerAccountId: sharedLink.owner.accountId,
+    sellerPayoutWallet: sharedLink.owner.payoutWallet,
   };
 }

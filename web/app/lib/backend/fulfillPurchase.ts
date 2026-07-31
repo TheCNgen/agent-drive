@@ -1,4 +1,4 @@
-import { submitHCSRecord } from '@/app/lib/hedera';
+import { submitHCSRecord, allocateTreasuryFunds } from '@/app/lib/hedera';
 import { Item, SharedLink, Transaction, User } from '@/app/lib/models';
 import { copyItemWithBFS } from '@/app/lib/utils/itemUtils';
 import { Affiliate } from '@/app/models/Affiliate';
@@ -259,6 +259,20 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
     } catch (affiliateError) {
       console.error('Error processing affiliate commission:', affiliateError);
     }
+  }
+
+  // Allocate funds in the Smart Contract Treasury
+  try {
+    await allocateTreasuryFunds(
+      quote.sellerPayoutWallet,
+      quote.resolvedAffiliate?.affiliateUser?.payoutWallet,
+      quote.sellerAmount,
+      quote.resolvedAffiliate?.feeTinybars || BigInt(0)
+    );
+  } catch (allocationError) {
+    console.error('Failed to allocate treasury funds:', allocationError);
+    // Continue fulfillment even if allocation fails so the buyer still gets their item.
+    // In production, we'd want a retry queue or admin alert for this!
   }
 
   await submitHCSRecord('TRANSACTION_COMPLETED', {

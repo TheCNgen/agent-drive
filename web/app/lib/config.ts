@@ -21,6 +21,9 @@ export const config = {
     feePayer: process.env.X402_FEE_PAYER || "0.0.7162784",
     platformFeeBps: parseInt(process.env.PLATFORM_FEE_BPS || "500", 10),
     treasuryAccountId: process.env.PLATFORM_TREASURY_ACCOUNT_ID,
+    treasuryContractId: process.env.TREASURY_CONTRACT_ID,
+    treasuryContractEvmAddress: process.env.TREASURY_CONTRACT_EVM_ADDRESS,
+    agentRegistrationFee: 500,
     treasuryKey: process.env.PLATFORM_TREASURY_KEY,
   },
   gcs: {
