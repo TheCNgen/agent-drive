@@ -113,15 +113,19 @@ export async function quoteListingPurchase(
   }
 
   const priceTinybars = BigInt(listing.priceTinybars);
-  const platformFee = percentOfTinybars(priceTinybars, Number(PLATFORM_FEE_PERCENT));
+  const basePlatformFee = percentOfTinybars(priceTinybars, Number(PLATFORM_FEE_PERCENT));
   const { resolved, summary } = await resolveAffiliate(
     affiliateCode,
-    { listingId },
+    { listingId: listing._id.toString() },
     listing.affiliateEnabled,
     priceTinybars,
     buyerId,
   );
   const affiliateFee = resolved?.feeTinybars ?? BigInt(0);
+  
+  const hasAffiliate = affiliateFee > BigInt(0);
+  const platformFee = hasAffiliate ? basePlatformFee : BigInt(0);
+  const payTo = hasAffiliate ? treasuryAccountId() : listing.seller.accountId;
   const sellerAmount = priceTinybars - platformFee - affiliateFee;
 
   return {
@@ -137,7 +141,7 @@ export async function quoteListingPurchase(
     },
     affiliate: summary,
     resolvedAffiliate: resolved,
-    payTo: treasuryAccountId(),
+    payTo,
     sellerAccountId: listing.seller.accountId,
     sellerPayoutWallet: listing.seller.payoutWallet,
   };
@@ -179,7 +183,7 @@ export async function quoteSharedLinkPurchase(
   }
 
   const priceTinybars = BigInt(sharedLink.priceTinybars);
-  const platformFee = percentOfTinybars(priceTinybars, Number(PLATFORM_FEE_PERCENT));
+  const basePlatformFee = percentOfTinybars(priceTinybars, Number(PLATFORM_FEE_PERCENT));
   const { resolved, summary } = await resolveAffiliate(
     affiliateCode,
     { sharedLinkId: sharedLink._id.toString() },
@@ -188,6 +192,10 @@ export async function quoteSharedLinkPurchase(
     buyerId,
   );
   const affiliateFee = resolved?.feeTinybars ?? BigInt(0);
+  
+  const hasAffiliate = affiliateFee > BigInt(0);
+  const platformFee = hasAffiliate ? basePlatformFee : BigInt(0);
+  const payTo = hasAffiliate ? treasuryAccountId() : sharedLink.owner.accountId;
   const sellerAmount = priceTinybars - platformFee - affiliateFee;
 
   return {
@@ -203,7 +211,7 @@ export async function quoteSharedLinkPurchase(
     },
     affiliate: summary,
     resolvedAffiliate: resolved,
-    payTo: treasuryAccountId(),
+    payTo,
     sellerAccountId: sharedLink.owner.accountId,
     sellerPayoutWallet: sharedLink.owner.payoutWallet,
   };

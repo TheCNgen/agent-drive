@@ -261,18 +261,20 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
     }
   }
 
-  // Allocate funds in the Smart Contract Treasury
-  try {
-    await allocateTreasuryFunds(
-      target.type === 'listing' ? doc.seller.payoutWallet : doc.owner.payoutWallet,
-      affiliate?.affiliateUser?.payoutWallet,
-      sellerAmount,
-      affiliate?.feeTinybars || BigInt(0)
-    );
-  } catch (allocationError) {
-    console.error('Failed to allocate treasury funds:', allocationError);
-    // Continue fulfillment even if allocation fails so the buyer still gets their item.
-    // In production, we'd want a retry queue or admin alert for this!
+  // Allocate funds in the Smart Contract Treasury ONLY if they were actually routed there
+  if (platformFee > BigInt(0)) {
+    try {
+      await allocateTreasuryFunds(
+        target.type === 'listing' ? doc.seller.payoutWallet : doc.owner.payoutWallet,
+        affiliate?.affiliateUser?.payoutWallet,
+        sellerAmount,
+        affiliate?.feeTinybars || BigInt(0)
+      );
+    } catch (allocationError) {
+      console.error('Failed to allocate treasury funds:', allocationError);
+      // Continue fulfillment even if allocation fails so the buyer still gets their item.
+      // In production, we'd want a retry queue or admin alert for this!
+    }
   }
 
   await submitHCSRecord('TRANSACTION_COMPLETED', {
