@@ -159,7 +159,7 @@ The sandbox had no `.env`, so this was stood up from scratch rather than skipped
 
 - **MongoDB**: a temporary, time-limited (`--deleteAfter` 6h) Atlas database user
   (`stage1_test_user`) was created via `atlas dbusers create`, scoped to `readWrite` on a
-  brand-new database (`cashdrive_stage1_test`) on the existing `cachedrive-dev` replica-set
+  brand-new database (`agentdrive_stage1_test`) on the existing `cachedrive-dev` replica-set
   cluster — never the app's real database. Both the user and every collection in that test
   database were deleted at the end of the session (`atlas dbusers delete`,
   `db.<collection>.drop()` for each).

@@ -22,10 +22,10 @@ test.describe('Phase 1: Storage (GCS)', () => {
     // 1. Upload
     await page.goto('/dashboard');
     // Assuming there is an input type="file" on the dashboard or an "upload" button that opens a dialog.
-    // The existing UI for CashDrive v1 has a file input. Let's find it.
+    // The existing UI for AgentDrive v1 has a file input. Let's find it.
     // Let's assume the button has text "Upload" or input type file is present
     
-    // Instead of guessing the exact UI of CashDrive v1, let's look for input[type="file"]
+    // Instead of guessing the exact UI of AgentDrive v1, let's look for input[type="file"]
     // Or we can just use the API if the UI is too complex, but the prompt says:
     // "upload via setInputFiles() -> file appears in the folder listing -> download link resolves 200 with the right content-type -> delete removes it"
     

@@ -1,4 +1,4 @@
-import { isCashDriveError } from "../errors.js";
+import { isAgentDriveError } from "../errors.js";
 import { redactObject } from "../core/redact.js";
 
 export function writeStdout(line: string): void {
@@ -14,7 +14,7 @@ export function writeJsonLine(obj: unknown): void {
 }
 
 export function exitCodeForError(err: unknown): number {
-  if (!isCashDriveError(err)) return 1;
+  if (!isAgentDriveError(err)) return 1;
   switch (err.code) {
     case "missing_credentials":
       return 3;
@@ -36,14 +36,14 @@ export function exitCodeForError(err: unknown): number {
  * Reports an error on the appropriate channel for the mode, and returns the exit code.
  *
  * Deliberately bypasses writeJsonLine's redaction: this envelope's `code` field is the
- * CashDriveError discriminant agents branch on (e.g. "claim_invalid"), not a claim code --
+ * AgentDriveError discriminant agents branch on (e.g. "claim_invalid"), not a claim code --
  * redactObject's generic "code" rule exists for the latter and would otherwise mangle the
  * former. `message` is always one of our own canned strings or a generic Error message,
  * never a value that embeds a secret.
  */
 export function reportError(err: unknown, json: boolean): number {
   const message = err instanceof Error ? err.message : String(err);
-  const code = isCashDriveError(err) ? err.code : "unknown_error";
+  const code = isAgentDriveError(err) ? err.code : "unknown_error";
   if (json) {
     process.stdout.write(JSON.stringify({ ok: false, error: message, code }) + "\n");
   } else {

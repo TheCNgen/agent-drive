@@ -84,7 +84,7 @@ export interface WalletProfileFields {
   activated: boolean;
 }
 
-/** Stored on disk at ~/.cash-drive/config.json, one entry per profile. */
+/** Stored on disk at ~/.agent-drive/config.json, one entry per profile. */
 export interface AgentProfile {
   apiKey: string;
   baseUrl: string;

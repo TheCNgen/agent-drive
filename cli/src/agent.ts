@@ -11,10 +11,10 @@ export {
   writePendingEntry,
 } from "./agent/paymentJournal.js";
 
-export { CashDrive, type CashDriveOptions } from "./client.js";
+export { AgentDrive, type AgentDriveOptions } from "./client.js";
 export { PaymentsResource } from "./resources/payments.js";
 export {
-  CashDriveError,
+  AgentDriveError,
   ValidationError,
   ClaimInvalidError,
   AuthenticationError,
@@ -37,7 +37,7 @@ export {
   NetworkError,
   TimeoutError,
   ConfigCorruptError,
-  isCashDriveError,
+  isAgentDriveError,
 } from "./errors.js";
 
 export type {

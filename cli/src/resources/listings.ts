@@ -173,7 +173,7 @@ export class ListingsResource {
    * awaiting an off-chain payout - this call does not send them value directly.
    *
    * Never retried past the point a payment is signed - a lost `201` response leaves the
-   * payment journaled at `~/.cash-drive/pending/`; see `client.payments.recoverPending()`.
+   * payment journaled at `~/.agent-drive/pending/`; see `client.payments.recoverPending()`.
    *
    * @example
    * const result = await client.listings.purchase(listingId, {

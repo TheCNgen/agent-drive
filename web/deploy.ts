@@ -13,7 +13,7 @@ async function main() {
     client.setOperator(operatorId, operatorKey);
 
     console.log("Reading contract bytecode...");
-    const bytecodeStr = fs.readFileSync("contracts/build/contracts_CashDriveTreasury_sol_CashDriveTreasury.bin", "utf8");
+    const bytecodeStr = fs.readFileSync("contracts/build/contracts_AgentDriveTreasury_sol_AgentDriveTreasury.bin", "utf8");
 
     console.log("Deploying contract...");
     const contractCreate = new ContractCreateFlow()

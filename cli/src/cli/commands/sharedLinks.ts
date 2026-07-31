@@ -1,4 +1,4 @@
-import { CashDrive } from "../../client.js";
+import { AgentDrive } from "../../client.js";
 import { readProfile } from "../../agent/configStore.js";
 import { MissingCredentialsError } from "../../errors.js";
 import { flagString, type FlagValue } from "../run.js";
@@ -14,7 +14,7 @@ export async function sharedLinksCommand(
   const profile = await readProfile(profileName);
   if (!profile) return reportError(new MissingCredentialsError(), json);
 
-  const client = new CashDrive({
+  const client = new AgentDrive({
     apiKey: profile.apiKey,
     baseUrl: profile.baseUrl,
     apiPrefix: profile.apiPrefix,
@@ -41,7 +41,7 @@ export async function sharedLinksCommand(
         result = await client.sharedLinks.claim(positionals[0]!);
         break;
       default:
-        writeStderr(`Usage: cash-drive links <list|create|claim> [args]`);
+        writeStderr(`Usage: agent-drive links <list|create|claim> [args]`);
         return 2;
     }
 

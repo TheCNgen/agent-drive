@@ -3,7 +3,7 @@ import type { HttpClient } from "../core/http.js";
 import { computeBackoffMs, DEFAULT_RETRY_POLICY, sleep } from "../core/retry.js";
 import {
   AgentNotActivatedError,
-  CashDriveError,
+  AgentDriveError,
   InsufficientBalanceError,
   NetworkError,
   PaymentRequiredError,
@@ -39,7 +39,7 @@ function generateQuoteId(): string {
 }
 
 function toPaymentQuote(target: PurchaseTarget, req: XPaymentRequirements): PaymentQuote {
-  const cashdrive = (req.extra?.cashdrive ?? {}) as {
+  const agentdrive = (req.extra?.agentdrive ?? {}) as {
     breakdown?: PaymentQuote["breakdown"];
     affiliate?: PaymentQuote["affiliate"];
   };
@@ -47,12 +47,12 @@ function toPaymentQuote(target: PurchaseTarget, req: XPaymentRequirements): Paym
     quoteId: generateQuoteId(),
     target,
     priceTinybars: req.amount,
-    breakdown: cashdrive.breakdown ?? {
+    breakdown: agentdrive.breakdown ?? {
       platformFeeTinybars: "0",
       affiliateFeeTinybars: "0",
       sellerAmountTinybars: req.amount,
     },
-    affiliate: cashdrive.affiliate ?? { applied: false },
+    affiliate: agentdrive.affiliate ?? { applied: false },
     network: req.network,
     payTo: req.payTo,
     feePayer: typeof req.extra?.feePayer === "string" ? req.extra.feePayer : "",
@@ -78,7 +78,7 @@ async function fetchRequirements(
     }
     throw err;
   }
-  throw new CashDriveError(
+  throw new AgentDriveError(
     "Expected the server to respond 402 with a quote, but it completed the purchase without payment.",
     "unexpected_response",
   );
@@ -111,8 +111,8 @@ async function fetchRequirementsWithRetry(
 
 async function assertActivated(profileName: string | undefined): Promise<void> {
   if (!isNodeRuntime()) {
-    throw new CashDriveError(
-      "Payments require a Node.js environment with a local profile. Import from \"cash-drive/agent\".",
+    throw new AgentDriveError(
+      "Payments require a Node.js environment with a local profile. Import from \"agent-drive/agent\".",
       "node_required",
     );
   }
@@ -166,7 +166,7 @@ export async function executePurchase(
   const quotedAtMs = Date.now();
 
   if (options.maxPriceTinybars !== undefined && BigInt(quote.priceTinybars) > BigInt(options.maxPriceTinybars)) {
-    throw new CashDriveError(
+    throw new AgentDriveError(
       `The quoted price (${quote.priceTinybars} tinybars) exceeds maxPriceTinybars (${options.maxPriceTinybars}). Refusing to pay.`,
       "price_exceeds_limit",
     );
@@ -274,14 +274,14 @@ export class PaymentsResource {
   }
 
   /**
-   * Resolves every entry in the local payment journal (`~/.cash-drive/pending/`) against the
+   * Resolves every entry in the local payment journal (`~/.agent-drive/pending/`) against the
    * backend's real purchase state. A payment whose settlement succeeded but whose `201`
    * response never arrived locally is reported `recovered` and cleared; anything else is
    * reported `needs_investigation` with no automatic re-payment.
    */
   async recoverPending(): Promise<RecoveryResult[]> {
     if (!isNodeRuntime()) {
-      throw new CashDriveError("recoverPending() requires Node.js.", "node_required");
+      throw new AgentDriveError("recoverPending() requires Node.js.", "node_required");
     }
     const { listPendingEntries, deletePendingEntry } = await import("../agent/paymentJournal.js");
     const entries = await listPendingEntries();

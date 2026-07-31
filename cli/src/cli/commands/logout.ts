@@ -1,5 +1,5 @@
 import { createInterface } from "node:readline/promises";
-import { CashDrive } from "../../client.js";
+import { AgentDrive } from "../../client.js";
 import { deleteProfile, readConfig } from "../../agent/configStore.js";
 import type { AgentProfile } from "../../types/agent.js";
 import { flagBoolean, flagString, type FlagValue } from "../run.js";
@@ -7,7 +7,7 @@ import { tinybarsToHbar, writeJsonLine, writeStderr, writeStdout } from "../outp
 
 async function fetchBalanceTinybars(profile: AgentProfile): Promise<string | null> {
   try {
-    const client = new CashDrive({ apiKey: profile.apiKey, baseUrl: profile.baseUrl, apiPrefix: profile.apiPrefix });
+    const client = new AgentDrive({ apiKey: profile.apiKey, baseUrl: profile.baseUrl, apiPrefix: profile.apiPrefix });
     const me = await client.agent.me();
     return me.wallet.balanceTinybars;
   } catch {
@@ -40,7 +40,7 @@ export async function logoutCommand(flags: Record<string, FlagValue>, json: bool
   const config = await readConfig();
   if (!config) {
     if (json) writeJsonLine({ ok: true, removed: [] });
-    else writeStdout("No CashDrive config found; nothing to do.");
+    else writeStdout("No AgentDrive config found; nothing to do.");
     return 0;
   }
 

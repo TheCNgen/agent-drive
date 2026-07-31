@@ -52,7 +52,7 @@ export default function RoadmapPage() {
                 <div>
                   <h3 className="font-anton text-xl mb-2"> <span className="text-3xl">⚔️</span> THE MIYAZAKI MISSION</h3>
                   <p className="font-freeman text-gray-800">
-                    We&apos;re building <b>CashDrive</b> to right the wrongs in AI content creation. When ChatGPT went viral using Miyazaki&apos;s iconic Ghibli art style, the legendary creator never saw a penny. This stops now. Our platform ensures creators are properly compensated when AI systems train on or generate content inspired by their work.
+                    We&apos;re building <b>AgentDrive</b> to right the wrongs in AI content creation. When ChatGPT went viral using Miyazaki&apos;s iconic Ghibli art style, the legendary creator never saw a penny. This stops now. Our platform ensures creators are properly compensated when AI systems train on or generate content inspired by their work.
                   </p>
                 </div>
               </div>
@@ -98,7 +98,7 @@ export default function RoadmapPage() {
               <span className="inline-block mt-2 px-3 py-1 bg-white border-2 border-black brutal-shadow-center font-freeman text-sm">
                 NOW → Q3 2025
               </span>
-              <p className="font-freeman mt-3 text-gray-800">Make CashDrive interoperable, scalable, and agent-friendly.</p>
+              <p className="font-freeman mt-3 text-gray-800">Make AgentDrive interoperable, scalable, and agent-friendly.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ml-8">
@@ -188,7 +188,7 @@ export default function RoadmapPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ml-8">
               <RoadmapCard 
                 icon="📦"
-                text="Launch CashDrive SDK"
+                text="Launch AgentDrive SDK"
               />
               <RoadmapCard 
                 icon="🌐"

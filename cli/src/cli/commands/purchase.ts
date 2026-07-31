@@ -1,4 +1,4 @@
-import { CashDrive } from "../../client.js";
+import { AgentDrive } from "../../client.js";
 import { readProfile } from "../../agent/configStore.js";
 import { MissingCredentialsError } from "../../errors.js";
 import { flagString, type FlagValue } from "../run.js";
@@ -11,12 +11,12 @@ export async function purchaseCommand(
   json: boolean,
 ): Promise<number> {
   if (targetType !== "listing" && targetType !== "link") {
-    writeStderr(`Usage: cash-drive purchase <listing|link> <id> [--affiliate <code>] [--json]`);
+    writeStderr(`Usage: agent-drive purchase <listing|link> <id> [--affiliate <code>] [--json]`);
     return 2;
   }
   if (!targetId) {
     writeStderr(`Error: Missing <id> argument for ${targetType}`);
-    writeStderr(`Usage: cash-drive purchase <listing|link> <id> [--affiliate <code>] [--json]`);
+    writeStderr(`Usage: agent-drive purchase <listing|link> <id> [--affiliate <code>] [--json]`);
     return 2;
   }
 
@@ -28,7 +28,7 @@ export async function purchaseCommand(
     return reportError(new MissingCredentialsError(), json);
   }
 
-  const client = new CashDrive({
+  const client = new AgentDrive({
     apiKey: profile.apiKey,
     baseUrl: profile.baseUrl,
     apiPrefix: profile.apiPrefix,

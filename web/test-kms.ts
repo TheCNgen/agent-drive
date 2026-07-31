@@ -8,7 +8,7 @@ async function test() {
     console.log("Client created successfully. Trying to use it...");
     // Just try a dummy request or see if initialization itself hangs.
     const [res] = await kms.encrypt({
-      name: 'projects/oe-dev-env-2026/locations/europe-west1/keyRings/cashdrive-ring/cryptoKeys/user-wallet-keys',
+      name: 'projects/oe-dev-env-2026/locations/europe-west1/keyRings/agentdrive-ring/cryptoKeys/user-wallet-keys',
       plaintext: Buffer.from('test', 'utf8'),
     });
     console.log("Success:", res);

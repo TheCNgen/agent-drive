@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract CashDriveTreasury {
+contract AgentDriveTreasury {
     address public admin;
     mapping(address => uint256) public balances;
     
@@ -17,7 +17,7 @@ contract CashDriveTreasury {
     receive() external payable {}
 
     /**
-     * @dev Called by the CashDrive backend immediately after a purchase settles.
+     * @dev Called by the AgentDrive backend immediately after a purchase settles.
      * Assigns the HBAR that was just deposited to the seller and affiliate.
      */
     function allocate(

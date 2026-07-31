@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (containsPrivateKeyField(body)) {
       return NextResponse.json(
-        { error: 'Private keys must never be sent to CashDrive.', code: 'private_key_rejected' },
+        { error: 'Private keys must never be sent to AgentDrive.', code: 'private_key_rejected' },
         { status: 400 }
       );
     }

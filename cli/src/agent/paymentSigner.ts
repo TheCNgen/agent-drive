@@ -2,7 +2,7 @@ import { PrivateKey } from "@hiero-ledger/sdk";
 import { createClientHederaSigner } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/client";
 import type { PaymentRequirements } from "@x402/core/types";
-import { AgentNotActivatedError, CashDriveError } from "../errors.js";
+import { AgentNotActivatedError, AgentDriveError } from "../errors.js";
 import type { PaymentSigner, XPaymentPayload, XPaymentRequirements } from "../types/payment.js";
 import { readProfile } from "./configStore.js";
 import { loadWallet } from "./wallet.js";
@@ -43,7 +43,7 @@ export class LocalKeySigner implements PaymentSigner {
   async signPaymentPayload(requirements: XPaymentRequirements): Promise<XPaymentPayload> {
     const profile = await readProfile(this.profileName);
     if (!profile?.wallet) {
-      throw new CashDriveError("This profile has no wallet yet.", "wallet_missing");
+      throw new AgentDriveError("This profile has no wallet yet.", "wallet_missing");
     }
 
     // Scoped to this call only - never assigned to `this`, eligible for GC as soon as

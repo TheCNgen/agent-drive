@@ -11,7 +11,7 @@ import { TransactionsResource } from "./resources/transactions.js";
 import { PaymentsResource } from "./resources/payments.js";
 import type { Logger, LogLevel } from "./types/common.js";
 
-export interface CashDriveOptions {
+export interface AgentDriveOptions {
   apiKey?: string | undefined;
   baseUrl?: string | undefined;
   apiPrefix?: string | undefined;
@@ -25,7 +25,7 @@ export interface CashDriveOptions {
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RETRIES = 3;
 
-export class CashDrive {
+export class AgentDrive {
   readonly agent: AgentResource;
   readonly items: ItemsResource;
   readonly listings: ListingsResource;
@@ -34,16 +34,16 @@ export class CashDrive {
   readonly transactions: TransactionsResource;
   /**
    * Node-only in practice: signing a payment needs the active profile's local key material.
-   * Present on this class either way (it's shared between the `cash-drive` and
-   * `cash-drive/agent` entries), but its types/errors are exported only from
-   * `cash-drive/agent` and every method throws a clear error outside Node.
+   * Present on this class either way (it's shared between the `agent-drive` and
+   * `agent-drive/agent` entries), but its types/errors are exported only from
+   * `agent-drive/agent` and every method throws a clear error outside Node.
    */
   readonly payments: PaymentsResource;
-  private readonly options: CashDriveOptions;
+  private readonly options: AgentDriveOptions;
   private readonly logger: Logger;
   private httpClientPromise: Promise<HttpClient> | undefined;
 
-  constructor(options: CashDriveOptions = {}) {
+  constructor(options: AgentDriveOptions = {}) {
     this.options = options;
     this.logger = resolveLogger(options.logger);
     const getHttp = (): Promise<HttpClient> => this.getHttpClient();

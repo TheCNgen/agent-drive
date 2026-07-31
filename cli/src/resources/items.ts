@@ -1,6 +1,6 @@
 import type { HttpClient } from "../core/http.js";
 import { iteratePages, normalizePage, type Page } from "../core/pagination.js";
-import { CashDriveError } from "../errors.js";
+import { AgentDriveError } from "../errors.js";
 import type {
   Breadcrumb,
   CreateFolderInput,
@@ -58,7 +58,7 @@ export class ItemsResource {
     const raw = await http.request<{ items: Item[] }>("GET", "/items");
     const item = raw.items[0];
     if (!item) {
-      throw new CashDriveError("The backend returned no root folder for this owner.", "server_error");
+      throw new AgentDriveError("The backend returned no root folder for this owner.", "server_error");
     }
     return item;
   }
@@ -107,7 +107,7 @@ export class ItemsResource {
    * Treat it as fire-and-forget.
    *
    * @example
-   * import { fileFromPath } from "cash-drive/node";
+   * import { fileFromPath } from "agent-drive/node";
    * const file = await fileFromPath("./report.pdf");
    * const item = await client.items.upload({ file, name: "report.pdf" });
    */

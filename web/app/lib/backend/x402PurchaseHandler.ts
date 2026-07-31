@@ -23,7 +23,7 @@ async function buildPaymentRequirements(quote: PurchaseQuote): Promise<PaymentRe
     maxTimeoutSeconds: MAX_TIMEOUT_SECONDS,
     extra: {
       feePayer,
-      cashdrive: {
+      agentdrive: {
         target: { type: quote.target.type, id: quote.targetId },
         breakdown: quote.breakdown,
         affiliate: quote.affiliate,

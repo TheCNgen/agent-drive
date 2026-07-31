@@ -195,7 +195,7 @@ export default function AffiliateCard({
         <div className="mb-4">
           <button
             onClick={() => {
-              const command = `npx -y cash-drive@latest purchase ${affiliate.listing ? 'listing' : 'link'} ${affiliate.listing ? affiliate.listing._id : affiliate.sharedLink?.linkId} --affiliate ${affiliate.affiliateCode}`;
+              const command = `npx -y agent-drive@latest purchase ${affiliate.listing ? 'listing' : 'link'} ${affiliate.listing ? affiliate.listing._id : affiliate.sharedLink?.linkId} --affiliate ${affiliate.affiliateCode}`;
               const instructions = `Run this command to purchase "${content?.title}":\n\n    ${command}`;
               navigator.clipboard.writeText(instructions);
               setCopyAgentSuccess(true);

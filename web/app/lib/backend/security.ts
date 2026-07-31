@@ -1,6 +1,6 @@
 /**
  * Recursively checks whether a request body carries a `privateKey` field at
- * any depth (case-insensitive key match). CashDrive is non-custodial for
+ * any depth (case-insensitive key match). AgentDrive is non-custodial for
  * agent wallets: a private key must never be able to reach the server, even
  * by accident (a confused SDK integration, a copy-pasted debug payload).
  */

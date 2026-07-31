@@ -7,7 +7,7 @@ function isNodeRuntime(): boolean {
 
 function buildUserAgent(): string {
   const nodeVersion = process.versions.node;
-  return `cash-drive/${SDK_VERSION} node/${nodeVersion} ${process.platform}`;
+  return `agent-drive/${SDK_VERSION} node/${nodeVersion} ${process.platform}`;
 }
 
 export class ApiKeyAuth implements AuthStrategy {

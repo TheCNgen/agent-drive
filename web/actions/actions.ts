@@ -59,7 +59,7 @@ export async function purchaseFromMarketplace(wallet: string, id: string, affili
   
   let tx = new TransferTransaction()
     .addHbarTransfer(buyerUser.accountId, new Hbar(-price))
-    .addHbarTransfer(platformAccount, new Hbar(price));
+    .addHbarTransfer(platformAccount as string, new Hbar(price));
   
   const txResponse = await tx.execute(client);
   const receipt = await txResponse.getReceipt(client);
@@ -134,7 +134,7 @@ export async function purchaseMonetizedLink(wallet: string, id: string) {
   
   const tx = new TransferTransaction()
     .addHbarTransfer(buyerUser.accountId, new Hbar(-price))
-    .addHbarTransfer(platformAccount, new Hbar(price));
+    .addHbarTransfer(platformAccount as string, new Hbar(price));
     
   const txResponse = await tx.execute(client);
   const receipt = await txResponse.getReceipt(client);

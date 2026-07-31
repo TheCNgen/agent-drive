@@ -14,7 +14,7 @@ import Navbar from './components/global/Navbar'
 const accordionData = [
   {
     title: "WHY CHOOSE US?",
-    content: "CashDrive isn't just a file host — it's a monetization engine. With x402, people can pay for your content without accounts or subscriptions. Our AI helps you create new content, and because we run on open MCP servers, any AI agent can discover and pay for your files too. Creators earn. Curators get rewarded. Copyright worries? Gone."
+    content: "AgentDrive isn't just a file host — it's a monetization engine. With x402, people can pay for your content without accounts or subscriptions. Our AI helps you create new content, and because we run on open MCP servers, any AI agent can discover and pay for your files too. Creators earn. Curators get rewarded. Copyright worries? Gone."
   },
   {
     title: "HOW DO I EARN FROM MY FILES?",

@@ -6,11 +6,11 @@ export type { FileLike } from "./utils/file.js";
 
 /**
  * Reads a file from disk into a `File` suitable for `client.items.upload()`. Node-only —
- * imported from `cash-drive/node`, never from the root or `/agent` entries, so browser
+ * imported from `agent-drive/node`, never from the root or `/agent` entries, so browser
  * bundlers never pull in `node:fs`.
  *
  * @example
- * import { fileFromPath } from "cash-drive/node";
+ * import { fileFromPath } from "agent-drive/node";
  * const file = await fileFromPath("./report.pdf");
  * await client.items.upload({ file, name: "report.pdf" });
  */

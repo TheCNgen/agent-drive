@@ -103,7 +103,7 @@ export async function run(argv: string[]): Promise<number> {
       case "help":
         return helpCommand();
       case undefined:
-        writeStderr("Usage: cash-drive <onboard|whoami|logout|payments|purchase|items|listings|links|affiliates|transactions|version> [flags]. Run with --help for details.");
+        writeStderr("Usage: agent-drive <onboard|whoami|logout|payments|purchase|items|listings|links|affiliates|transactions|version> [flags]. Run with --help for details.");
         return 2;
       default:
         writeStderr(`Unknown command "${command}". Run with --help for details.`);

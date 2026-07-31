@@ -39,7 +39,7 @@ function createHumanStateHandler(): (state: OnboardState) => void {
         writeStderr(`✓ Wallet ${state.evmAddress}`);
         break;
       case "wallet_registered":
-        writeStderr("✓ Registered with CashDrive");
+        writeStderr("✓ Registered with AgentDrive");
         printFundingInstructions(state.evmAddress, state.suggestedFundingTinybars);
         break;
       case "awaiting_funding": {
@@ -57,7 +57,7 @@ function createHumanStateHandler(): (state: OnboardState) => void {
             process.stderr.write("\n");
             fundingLineOpen = false;
           }
-          writeStderr("Ctrl-C is safe -- run `cash-drive onboard --resume` to continue later.");
+          writeStderr("Ctrl-C is safe -- run `agent-drive onboard --resume` to continue later.");
         }
         break;
       }
@@ -112,10 +112,10 @@ export async function onboardCommand(flags: Record<string, FlagValue>, json: boo
   if (isActive) {
     writeStdout(`Saved to ${configPath()} (profile: ${profileName})`);
   } else if (noWait) {
-    writeStdout("Wallet registered but not yet funded. Fund the address above, then run `cash-drive onboard --resume`.");
+    writeStdout("Wallet registered but not yet funded. Fund the address above, then run `agent-drive onboard --resume`.");
     writeStdout(`Progress saved to ${configPath()} (profile: ${profileName})`);
   } else {
-    writeStdout("Timed out waiting for funding. Run `cash-drive onboard --resume` once the wallet is funded.");
+    writeStdout("Timed out waiting for funding. Run `agent-drive onboard --resume` once the wallet is funded.");
     writeStdout(`Progress saved to ${configPath()} (profile: ${profileName})`);
   }
 

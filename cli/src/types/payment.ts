@@ -1,8 +1,8 @@
 /**
  * Local, isomorphic mirror of the `@x402/core` v2 `PaymentRequirements`/`PaymentPayload`
  * wire shapes - kept independent of `@x402/core`'s types (a Node-only dependency for this
- * SDK, per the stage doc) so this file can be imported from `cash-drive` (root) as well as
- * `cash-drive/agent` without pulling in Hedera SDK code. `LocalKeySigner` (Node-only) is
+ * SDK, per the stage doc) so this file can be imported from `agent-drive` (root) as well as
+ * `agent-drive/agent` without pulling in Hedera SDK code. `LocalKeySigner` (Node-only) is
  * where these are actually built and structurally match the real `@x402/core` types.
  */
 export interface XPaymentRequirements {
@@ -25,7 +25,7 @@ export interface XPaymentPayload {
 
 /**
  * The seam between the payment flow and however a signature actually gets produced. Only
- * one implementation ships in this stage ({@link LocalKeySigner}, `cash-drive/agent`), but
+ * one implementation ships in this stage ({@link LocalKeySigner}, `agent-drive/agent`), but
  * the interface is the extension point for hardware signers, KMS-backed signers, and spend
  * limits without a redesign.
  */
@@ -92,7 +92,7 @@ export interface PurchaseResult {
   settlement: Record<string, unknown>;
 }
 
-/** `~/.cash-drive/pending/<quoteId>.json` - written before phase 2, deleted only after a 201. */
+/** `~/.agent-drive/pending/<quoteId>.json` - written before phase 2, deleted only after a 201. */
 export interface PendingPaymentEntry {
   quoteId: string;
   target: PurchaseTarget;

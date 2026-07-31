@@ -1,7 +1,7 @@
 import { mkdir, open, readFile, rename, stat } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
-import { CashDriveError, ConfigCorruptError } from "../errors.js";
+import { AgentDriveError, ConfigCorruptError } from "../errors.js";
 import type { AgentProfile, StoredConfig } from "../types/agent.js";
 import { configDir, configPath } from "./paths.js";
 
@@ -45,8 +45,8 @@ export async function readConfig(): Promise<StoredConfig | null> {
 
   const config = parsed as Partial<StoredConfig>;
   if (config.version !== CURRENT_VERSION) {
-    throw new CashDriveError(
-      `The CashDrive config file at ${configPath()} has version ${String(config.version)}, which this SDK version does not understand. Upgrade the cash-drive package.`,
+    throw new AgentDriveError(
+      `The AgentDrive config file at ${configPath()} has version ${String(config.version)}, which this SDK version does not understand. Upgrade the agent-drive package.`,
       "config_unsupported_version",
     );
   }
@@ -89,7 +89,7 @@ async function writeConfigAtomic(config: StoredConfig): Promise<void> {
     const mode = info.mode & 0o777;
     if (mode !== 0o600) {
       process.stderr.write(
-        `[cash-drive] warning: could not set ${target} to mode 0600 (got ${mode.toString(8)}). Some filesystems and Windows ignore this.\n`,
+        `[agent-drive] warning: could not set ${target} to mode 0600 (got ${mode.toString(8)}). Some filesystems and Windows ignore this.\n`,
       );
     }
   } catch {
@@ -109,7 +109,7 @@ export async function patchProfile(name: string, patch: Partial<AgentProfile>): 
   const config = (await readConfig()) ?? emptyConfig();
   const existing = config.profiles[name];
   if (!existing) {
-    throw new CashDriveError(`No profile named "${name}" exists in ${configPath()}.`, "profile_not_found");
+    throw new AgentDriveError(`No profile named "${name}" exists in ${configPath()}.`, "profile_not_found");
   }
   config.profiles[name] = mergeProfile(existing, patch);
   await writeConfigAtomic(config);

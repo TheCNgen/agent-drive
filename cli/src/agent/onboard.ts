@@ -1,10 +1,10 @@
-import { CashDrive } from "../client.js";
+import { AgentDrive } from "../client.js";
 import { DEFAULT_API_PREFIX, DEFAULT_BASE_URL } from "../config.js";
 import { redeemClaim } from "../auth/claim.js";
 import { ACTIVATION_RETRY_MESSAGE, activateAccount } from "./activate.js";
 import { generateWallet, loadWallet } from "./wallet.js";
 import { patchProfile, readProfile, writeProfile } from "./configStore.js";
-import { ActivationError, CashDriveError, isCashDriveError } from "../errors.js";
+import { ActivationError, AgentDriveError, isAgentDriveError } from "../errors.js";
 import { sleep } from "../core/retry.js";
 import type { AgentProfile, ClaimResult, HederaNetwork, OnboardState } from "../types/agent.js";
 
@@ -24,8 +24,8 @@ export interface OnboardOptions {
   fetch?: typeof globalThis.fetch | undefined;
 }
 
-function buildClient(profile: AgentProfile, fetchImpl?: typeof globalThis.fetch): CashDrive {
-  return new CashDrive({
+function buildClient(profile: AgentProfile, fetchImpl?: typeof globalThis.fetch): AgentDrive {
+  return new AgentDrive({
     apiKey: profile.apiKey,
     baseUrl: profile.baseUrl,
     apiPrefix: profile.apiPrefix,
@@ -34,7 +34,7 @@ function buildClient(profile: AgentProfile, fetchImpl?: typeof globalThis.fetch)
 }
 
 async function pollUntilFunded(
-  client: CashDrive,
+  client: AgentDrive,
   opts: { evmAddress: string; fundingTimeoutMs: number; emit: (s: OnboardState) => void },
 ): Promise<{ accountId: string; balanceTinybars: string } | "timeout"> {
   const start = Date.now();
@@ -58,11 +58,11 @@ async function pollUntilFunded(
 }
 
 /** Translates the backend's not_funded/not_activated codes into the operator-facing ActivationError. */
-async function confirmActivation(client: CashDrive, accountId: string, transactionId: string) {
+async function confirmActivation(client: AgentDrive, accountId: string, transactionId: string) {
   try {
     return await client.agent.activate({ transactionId });
   } catch (err) {
-    if (isCashDriveError(err) && (err.code === "not_activated" || err.code === "not_funded")) {
+    if (isAgentDriveError(err) && (err.code === "not_activated" || err.code === "not_funded")) {
       throw new ActivationError(ACTIVATION_RETRY_MESSAGE, {
         status: err.status,
         method: err.method,
@@ -77,7 +77,7 @@ async function confirmActivation(client: CashDrive, accountId: string, transacti
 
 /**
  * Takes an agent from a claim code to an activated, funded, wallet-bearing identity
- * persisted at ~/.cash-drive/config.json. The step order is load-bearing: each piece of
+ * persisted at ~/.agent-drive/config.json. The step order is load-bearing: each piece of
  * state is written to disk before the next step touches it, so a process crash at any
  * point leaves behind a profile `--resume` can pick back up rather than an orphaned key
  * or a spent claim code with nothing to show for it.
@@ -94,15 +94,15 @@ export async function onboard(options: OnboardOptions): Promise<AgentProfile> {
   if (options.resume) {
     const existing = await readProfile(profileName);
     if (!existing) {
-      throw new CashDriveError(
-        `No profile named "${profileName}" to resume. Run \`cash-drive onboard --claim <code>\` first.`,
+      throw new AgentDriveError(
+        `No profile named "${profileName}" to resume. Run \`agent-drive onboard --claim <code>\` first.`,
         "profile_not_found",
       );
     }
     profile = existing;
   } else {
     if (!options.claimCode) {
-      throw new CashDriveError("A claim code is required unless --resume is set.", "bad_request");
+      throw new AgentDriveError("A claim code is required unless --resume is set.", "bad_request");
     }
 
     emit({ state: "claiming" });
@@ -155,7 +155,7 @@ export async function onboard(options: OnboardOptions): Promise<AgentProfile> {
 
   const wallet = profile.wallet;
   if (!wallet) {
-    throw new CashDriveError("Wallet generation did not persist as expected.", "internal_error");
+    throw new AgentDriveError("Wallet generation did not persist as expected.", "internal_error");
   }
 
   // Step 4: register with the backend. Idempotent -- re-registering the same address is a
@@ -199,7 +199,7 @@ export async function onboard(options: OnboardOptions): Promise<AgentProfile> {
 
   const fundedWallet = profile.wallet;
   if (!fundedWallet || !fundedWallet.accountId) {
-    throw new CashDriveError("Funding did not persist as expected.", "internal_error");
+    throw new AgentDriveError("Funding did not persist as expected.", "internal_error");
   }
 
   // Step 6: self-pay the hollow-account activation transaction, then confirm it with the backend.

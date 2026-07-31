@@ -1,6 +1,6 @@
 # Affiliate Commission Split and Ledger Architecture
 
-This report details how the CashDrive platform calculates, splits, and records affiliate commissions when a monetized listing or shared link is purchased.
+This report details how the AgentDrive platform calculates, splits, and records affiliate commissions when a monetized listing or shared link is purchased.
 
 ## 1. Fee Calculation and Split
 

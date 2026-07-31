@@ -49,7 +49,7 @@ export default function SettingsTab() {
     <div className="bg-white border-2 border-black p-6 brutal-shadow-left">
       <h2 className="font-anton text-3xl mb-4">Payout Settings</h2>
       <p className="font-freeman text-gray-700 mb-6 max-w-2xl">
-        CashDrive is now non-custodial! When you sell an item or earn affiliate commissions, the funds are deposited directly into a Smart Contract. Set your Hedera EVM Address below so you can claim your earnings.
+        AgentDrive is now non-custodial! When you sell an item or earn affiliate commissions, the funds are deposited directly into a Smart Contract. Set your Hedera EVM Address below so you can claim your earnings.
       </p>
 
       {loading ? (

@@ -57,8 +57,8 @@ export default function SharedLinkPage() {
     try {
       const isMonetized = linkData?.link?.type === 'monetized';
       const cliCommand = isMonetized 
-        ? `npx -y cash-drive@latest purchase link ${linkId}`
-        : `npx -y cash-drive@latest links claim ${linkId}`;
+        ? `npx -y agent-drive@latest purchase link ${linkId}`
+        : `npx -y agent-drive@latest links claim ${linkId}`;
       const action = isMonetized ? "purchase" : "claim";
       const instructions = `Run this command to ${action} "${linkData?.link?.title}":\n\n    ${cliCommand}`;
       
@@ -69,8 +69,8 @@ export default function SharedLinkPage() {
       console.error('Copy error:', err);
       const isMonetized = linkData?.link?.type === 'monetized';
       const cliCommand = isMonetized 
-        ? `npx -y cash-drive@latest purchase link ${linkId}`
-        : `npx -y cash-drive@latest links claim ${linkId}`;
+        ? `npx -y agent-drive@latest purchase link ${linkId}`
+        : `npx -y agent-drive@latest links claim ${linkId}`;
       alert('Failed to copy instructions. Please copy this manually:\n\n' + cliCommand);
     }
   };

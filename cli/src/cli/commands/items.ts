@@ -1,4 +1,4 @@
-import { CashDrive } from "../../client.js";
+import { AgentDrive } from "../../client.js";
 import { readProfile } from "../../agent/configStore.js";
 import { MissingCredentialsError } from "../../errors.js";
 import { flagString, type FlagValue } from "../run.js";
@@ -14,7 +14,7 @@ export async function itemsCommand(
   const profile = await readProfile(profileName);
   if (!profile) return reportError(new MissingCredentialsError(), json);
 
-  const client = new CashDrive({
+  const client = new AgentDrive({
     apiKey: profile.apiKey,
     baseUrl: profile.baseUrl,
     apiPrefix: profile.apiPrefix,
@@ -68,7 +68,7 @@ export async function itemsCommand(
         break;
       }
       default:
-        writeStderr(`Usage: cash-drive items <list|get|create-folder|upload|delete|download> [args]`);
+        writeStderr(`Usage: agent-drive items <list|get|create-folder|upload|delete|download> [args]`);
         return 2;
     }
 

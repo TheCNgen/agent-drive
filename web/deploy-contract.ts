@@ -8,7 +8,7 @@ async function main() {
   const client = Client.forTestnet();
   client.setOperator(operatorId, operatorKey);
 
-  const bytecode = fs.readFileSync('../contracts/bin/contracts_CashDriveTreasury_sol_CashDriveTreasury.bin', 'utf8');
+  const bytecode = fs.readFileSync('../contracts/bin/contracts_AgentDriveTreasury_sol_AgentDriveTreasury.bin', 'utf8');
 
   console.log("Deploying contract...");
   const contractCreate = new ContractCreateFlow()

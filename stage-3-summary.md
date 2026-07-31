@@ -1,9 +1,9 @@
 # Stage 3 — SDK: Resources — Summary
 
 Attaches `items`, `listings`, `sharedLinks`, `affiliates`, and `transactions` to the
-`CashDrive` client built in Stage 2, with a single normalized pagination shape, a
+`AgentDrive` client built in Stage 2, with a single normalized pagination shape, a
 `Ref<T>`/`ObjectId`/`ISODate`/`Tinybars` type vocabulary, hbar/file utilities, and a new
-`cash-drive/node` entry for `fileFromPath()`. All non-payment CashDrive endpoints are now
+`agent-drive/node` entry for `fileFromPath()`. All non-payment AgentDrive endpoints are now
 typed, JSDoc'd methods; the two purchase endpoints remain unimplemented per the stage's
 explicit scope, and there is no `ai` surface anywhere.
 
@@ -24,7 +24,7 @@ explicit scope, and there is no `ai` surface anywhere.
   on `!hasNextPage || data.length === 0` (the second condition is load-bearing — `/items`
   computes `hasNextPage` as `items.length === limit`, so a final page that exactly fills
   the limit reports one phantom extra page); caps at 1000 pages and throws
-  `CashDriveError` (`pagination_runaway`) rather than looping forever.
+  `AgentDriveError` (`pagination_runaway`) rather than looping forever.
 
 ### Types (`src/types/{common,item,listing,sharedLink,affiliate,transaction}.ts`)
 - `common.ts` gained `ObjectId`, `ISODate`, `Tinybars`, `Ref<T>` with `isPopulated()`/
@@ -127,7 +127,7 @@ explicit scope, and there is no `ai` surface anywhere.
   §7.6 slow-report calls).
 
 ### Client wiring (`client.ts`)
-`CashDrive`'s constructor now resolves the logger eagerly (pure, no I/O — unlike
+`AgentDrive`'s constructor now resolves the logger eagerly (pure, no I/O — unlike
 `HttpClient`, which is still built lazily on first use) so `affiliates`/`transactions`
 can log their `@internal` warnings without needing an async accessor.
 
@@ -136,12 +136,12 @@ can log their `@internal` warnings without needing an async accessor.
 Same throwaway-infrastructure pattern as Stages 1–2, all torn down afterward:
 
 - **MongoDB**: temporary Atlas user `stage3_test_user` (6h auto-`deleteAfter` safety net),
-  `readWrite` on a fresh `cashdrive_stage3_test` database on the existing `cachedrive-dev`
+  `readWrite` on a fresh `agentdrive_stage3_test` database on the existing `cachedrive-dev`
   cluster. Seeded directly via `mongosh` (bypassing onboarding, which Stage 2 already
   verified end-to-end): two `User`s with root folders, two `Agent`s owned by the seller —
   one with all nine resource scopes, one with only `items:read` — with real
   `keyHash`/`keyPrefix` pairs matching real bearer tokens.
-- **GCS**: a temporary bucket (`cashdrive-stage3-test-<timestamp>`) in the already-
+- **GCS**: a temporary bucket (`agentdrive-stage3-test-<timestamp>`) in the already-
   authenticated `oe-dev-env-2026` project, so `items.upload()` exercised **real** file
   bytes through **real** `@google-cloud/storage`, not the "GCS not configured" placeholder
   path.
@@ -220,8 +220,8 @@ database user deleted (in addition to its 6h auto-expiry safety net).
 
 ## Build/lint verification
 `npm run typecheck`, `npm run build`, `npm run smoke` (ESM + CJS), and `npm run
-lint:pack` (`publint` + `attw --pack .`) all pass. `cash-drive/node`'s `attw` node10
-resolution status matches the pre-existing `cash-drive/agent` entry exactly (expected —
+lint:pack` (`publint` + `attw --pack .`) all pass. `agent-drive/node`'s `attw` node10
+resolution status matches the pre-existing `agent-drive/agent` entry exactly (expected —
 same subpath-export shape), not a regression.
 
 ## Out of scope (unchanged)

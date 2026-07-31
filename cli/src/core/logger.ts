@@ -10,7 +10,7 @@ const LEVEL_ORDER: Record<LogLevel, number> = {
 };
 
 function write(stream: "stderr" | "stdout", label: string, message: string, meta?: unknown): void {
-  const line = meta === undefined ? `[cash-drive] ${label} ${message}` : `[cash-drive] ${label} ${message} ${JSON.stringify(redactObject(meta))}`;
+  const line = meta === undefined ? `[agent-drive] ${label} ${message}` : `[agent-drive] ${label} ${message} ${JSON.stringify(redactObject(meta))}`;
   if (stream === "stderr") process.stderr.write(line + "\n");
   else process.stdout.write(line + "\n");
 }

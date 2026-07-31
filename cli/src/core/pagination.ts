@@ -1,4 +1,4 @@
-import { CashDriveError } from "../errors.js";
+import { AgentDriveError } from "../errors.js";
 
 /** The SDK's single normalized pagination shape, replacing the backend's five envelopes. */
 export interface Page<T> {
@@ -101,7 +101,7 @@ export function normalizeFakeTotalPagination(raw: unknown, requestedLimit: numbe
  * increments `page`. Stops as soon as a page reports no next page *or* returns zero
  * items — the second condition matters because `/items` computes `hasNextPage` as
  * `items.length === limit`, so a final page that exactly fills the limit reports one
- * phantom extra page. Caps at 1000 pages and throws a `CashDriveError` with code
+ * phantom extra page. Caps at 1000 pages and throws a `AgentDriveError` with code
  * `pagination_runaway` rather than looping forever against a malformed envelope.
  */
 export async function* iteratePages<T>(
@@ -127,7 +127,7 @@ export async function* iteratePages<T>(
     pagesFetched++;
 
     if (pagesFetched >= MAX_ITERATE_PAGES) {
-      throw new CashDriveError(
+      throw new AgentDriveError(
         `iterate() did not terminate after ${MAX_ITERATE_PAGES} pages; the pagination envelope may be malformed.`,
         "pagination_runaway",
       );

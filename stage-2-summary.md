@@ -1,9 +1,9 @@
 # Stage 2 — SDK: Onboarding & Client Core — Summary
 
-Implements the `cash-drive` TypeScript SDK + CLI described in the Stage 2 spec: claim
+Implements the `agent-drive` TypeScript SDK + CLI described in the Stage 2 spec: claim
 redemption, non-custodial ECDSA wallet generation, backend wallet registration, funding
-wait, hollow-account self-activation, and persistence to `~/.cash-drive/config.json` —
-end to end via `cash-drive onboard --claim <hex>`. All work is in the new `sdk/` package,
+wait, hollow-account self-activation, and persistence to `~/.agent-drive/config.json` —
+end to end via `agent-drive onboard --claim <hex>`. All work is in the new `sdk/` package,
 a sibling of `web/` at the repo root (not part of `web`'s pnpm workspace; a standalone npm
 package per the spec's own `package.json`/scripts).
 
@@ -18,7 +18,7 @@ package per the spec's own `package.json`/scripts).
   `npm ls @hiero-ledger/sdk @hashgraph/sdk` resolves to exactly one
   `@hiero-ledger/sdk@2.85.0` and no `@hashgraph/sdk` — verified after install and again
   after the final build.
-- Two public entry points only: `cash-drive` (`src/index.ts`) and `cash-drive/agent`
+- Two public entry points only: `agent-drive` (`src/index.ts`) and `agent-drive/agent`
   (`src/agent.ts`). No `/mcp` entry anywhere in `package.json#exports`.
 
 ### Isomorphic core (`src/core`, `src/auth`, `src/client.ts`, `src/config.ts`)
@@ -28,11 +28,11 @@ package per the spec's own `package.json`/scripts).
   exponential backoff with full jitter, honoring `Retry-After`) via `core/retry.ts`. A
   non-JSON error body (Next.js crash page) falls back to `res.statusText` with the first
   500 chars of the raw text on `error.body`, instead of throwing on `JSON.parse`.
-- `errors.ts` — `CashDriveError` and every subclass in the spec's §7 table, plus
+- `errors.ts` — `AgentDriveError` and every subclass in the spec's §7 table, plus
   `errorFromApiResponse()`, which branches on the backend's `code` field first (never on
   `error`) and only falls back to `status` for codes it doesn't recognize — so
   backend-specific codes like `wallet_already_registered` or `not_activated` still surface
-  as a typed `CashDriveError` with that exact code intact for callers to switch on.
+  as a typed `AgentDriveError` with that exact code intact for callers to switch on.
 - `auth/claim.ts` — `redeemClaim()`: validates the 32-hex-char shape client-side before any
   network call, strips pasted whitespace and a `--claim=`/`claim=` artefact, and **never
   retries**, on any status or network error — it does not go through `HttpClient` at all,
@@ -43,12 +43,12 @@ package per the spec's own `package.json`/scripts).
   field independently, first hit wins). The on-disk tier is reached via a **dynamic**
   `import("./agent/configStore.js")` gated behind a Node-runtime check, which tsup's ESM
   output actually splits into its own chunk (`configStore-*.js`) — so the root `index.js`
-  bundle doesn't eagerly pull in `node:fs`. `CashDrive`'s constructor does zero I/O; the
+  bundle doesn't eagerly pull in `node:fs`. `AgentDrive`'s constructor does zero I/O; the
   `HttpClient` (and therefore any file/env read) is built lazily and cached on first
   `client.agent.*` call, confirmed by the no-network/no-config-file smoke tests.
 
 ### Node-only agent module (`src/agent/*`, entry `src/agent.ts`)
-- `paths.ts` — `CASHDRIVE_CONFIG_DIR` → `$XDG_CONFIG_HOME/cash-drive` → `~/.cash-drive`,
+- `paths.ts` — `AGENTDRIVE_CONFIG_DIR` → `$XDG_CONFIG_HOME/agent-drive` → `~/.agent-drive`,
   one path shape on every platform, per spec.
 - `configStore.ts` — atomic writes only (temp file in the same directory → `fsync` →
   `rename`), `mkdir` at `0700`, file written at `0600`, a post-write `stat` that warns
@@ -85,7 +85,7 @@ package per the spec's own `package.json`/scripts).
 - `logout` fetches the live balance via `client.agent.me()` before deleting a profile;
   refuses without `--force` if the balance is nonzero **or unreachable** (fail closed, not
   open) and requires `--yes` when stdout isn't a TTY.
-- Exit codes exactly per §8.3 (0/1/2/3/4/5/6), driven by `CashDriveError.code` →
+- Exit codes exactly per §8.3 (0/1/2/3/4/5/6), driven by `AgentDriveError.code` →
   `exitCodeForError()`.
 - `mock/server.ts` — a dependency-free `node:http` stand-in for the backend's agent lane
   (`claim`/`wallet`/`me`/`activate`/`revoke`), useful for local SDK development without the
@@ -99,7 +99,7 @@ package per the spec's own `package.json`/scripts).
 
 `redactObject()`'s key list includes `code` — correct, per spec, for the literal claim-code
 field agents might paste into a logged request body. But the CLI's own JSON error envelope
-(`{ok, error, code}`) also uses `code` for the `CashDriveError` discriminant (`"claim_invalid"`,
+(`{ok, error, code}`) also uses `code` for the `AgentDriveError` discriminant (`"claim_invalid"`,
 etc.) that §4's contract explicitly says callers must branch on. Running `redactObject()` over
 that envelope truncated the discriminant itself — a real, live-caught instance of `cdk_test_IwY…`-style
 redaction firing on the wrong field. Fixed by having `reportError()` construct that specific,
@@ -113,7 +113,7 @@ redemption round-tripping through the real backend.
 Stood up from scratch, same pattern as Stage 1:
 
 - **MongoDB**: a temporary, 6-hour-lived Atlas database user (`stage2_test_user`) scoped to
-  `readWrite` on a fresh `cashdrive_stage2_test` database on the existing `cachedrive-dev`
+  `readWrite` on a fresh `agentdrive_stage2_test` database on the existing `cachedrive-dev`
   cluster. Both the user and every collection were deleted at the end of the session.
 - **Hedera**: the already-configured `hcli` testnet operator (`0.0.9706416`, 50 HBAR) funded
   the SDK-generated wallet directly with `hcli hbar transfer`.
@@ -129,10 +129,10 @@ Stood up from scratch, same pattern as Stage 1:
 **Results:**
 
 - `POST /api/agents` (session) minted an agent + one-time 32-hex `claimCode`.
-- `npm pack` → `npx --package=<tarball> cash-drive onboard --claim <code> --base-url
+- `npm pack` → `npx --package=<tarball> agent-drive onboard --claim <code> --base-url
   http://localhost:3000 --no-wait --json` against the **real** running app: redeemed the
   claim, generated an ECDSA wallet, registered it, and stopped after registration exactly as
-  `--no-wait` specifies. `~/.cash-drive/config.json` (via `CASHDRIVE_CONFIG_DIR`) was written
+  `--no-wait` specifies. `~/.agent-drive/config.json` (via `AGENTDRIVE_CONFIG_DIR`) was written
   with mode `0600`, containing the full profile with a real, unredacted private key on disk
   (as required — only the CLI's own console output redacts it).
 - Confirmed the config **directory** is created at `0700` when the CLI creates it fresh
@@ -146,7 +146,7 @@ Stood up from scratch, same pattern as Stage 1:
   real testnet.
 - **After funding**, the mirror node showed a real hollow account (`0.0.9794480`,
   `"key": null`, balance `500000000` tinybars) — confirmed before running `--resume`.
-- `cash-drive onboard --resume --json` (no `--no-wait` this time) picked up exactly where
+- `agent-drive onboard --resume --json` (no `--no-wait` this time) picked up exactly where
   the previous process left off: polled `/me`, observed `funded`, self-paid the net-zero
   activation transfer on real testnet, confirmed via `POST /activate`, and reached `active`.
   Full state sequence observed: `wallet_registered → funded → activating → active`.
@@ -157,22 +157,22 @@ Stood up from scratch, same pattern as Stage 1:
   before: {"account":"0.0.9794480","balance":{"balance":500000000},"key":null}
   after:  {"key":{"_type":"ECDSA_SECP256K1","key":"03f7fa11c62bf55d1623f4279e0a1986cd6403a61a97d78c65404f5e75505eba92"}}
   ```
-- A **second, independent Node process** running `new CashDrive()` with **no arguments**
-  (only `CASHDRIVE_CONFIG_DIR` pointing at the same profile directory) called `agent.me()`
+- A **second, independent Node process** running `new AgentDrive()` with **no arguments**
+  (only `AGENTDRIVE_CONFIG_DIR` pointing at the same profile directory) called `agent.me()`
   successfully and got back the real `active` agent — confirming config pickup across
   process boundaries with zero constructor-time I/O.
-- `cash-drive whoami` reported `Status active`, the real `accountId`, and the real balance
+- `agent-drive whoami` reported `Status active`, the real `accountId`, and the real balance
   in both tinybars and ℏ.
-- `CASHDRIVE_API_KEY=<bogus>` correctly **overrode** the on-disk (valid) key and produced a
+- `AGENTDRIVE_API_KEY=<bogus>` correctly **overrode** the on-disk (valid) key and produced a
   `401 unauthenticated` from the real backend — confirming the env tier takes precedence.
 - Replaying the same claim code against the real `/api/v1/agent/claim` → `400 claim_invalid`
-  both directly via `curl` and through `cash-drive onboard --claim <same code>` (exit code
+  both directly via `curl` and through `agent-drive onboard --claim <same code>` (exit code
   `4`, JSON error envelope with the correctly-intact `"code":"claim_invalid"` after the fix
   above).
 - A malformed `--claim` value failed client-side pre-flight with no network call and exit
   code `2`; running `onboard` with neither `--claim` nor `--resume` also exited `2`;
   `whoami` with no config/credentials exited `3` with the exact §7.4 message.
-- `cash-drive logout --yes` on the now-funded, active profile **refused** to delete it
+- `agent-drive logout --yes` on the now-funded, active profile **refused** to delete it
   (balance `4.99852834 ℏ`, no `--force`), left `config.json` in place, and exited `0` — the
   "must not destroy a funded wallet by guessing at a command" requirement, confirmed live.
 - `mongosh` against the real database: `db.agents.findOne({}, {privateKey:1, publicKey:1,

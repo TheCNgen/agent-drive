@@ -1,5 +1,5 @@
 import { PrivateKey } from "@hiero-ledger/sdk";
-import { CashDriveError } from "../errors.js";
+import { AgentDriveError } from "../errors.js";
 import type { AgentProfile } from "../types/agent.js";
 
 export interface GeneratedWallet {
@@ -32,7 +32,7 @@ export function generateWallet(): GeneratedWallet {
 
 export function loadWallet(profile: AgentProfile): GeneratedWallet {
   if (!profile.wallet) {
-    throw new CashDriveError("This profile has no wallet yet.", "wallet_missing");
+    throw new AgentDriveError("This profile has no wallet yet.", "wallet_missing");
   }
   const key = PrivateKey.fromStringECDSA(profile.wallet.privateKey);
   return {

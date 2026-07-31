@@ -28,4 +28,4 @@ Here's a summary of the implementation:
 - **Live Onboarding Stepper**: Designed `OnboardingStepper` using the `.evmAddress` hook states to update UI instantly across the 6 milestones representing the agent bootstrap (`handshake` -> `active`).
 - **Detail Modal**: Structured `AgentDetailModal` into a 4-card display (Spend, Purchases, Balance, Last Active), combined with read-only interactive UI components (`AgentPolicies` controls and `AgentDangerZone`).
 
-Everything was fully checked against Next.js linting/TypeScript using `tsc` to verify no syntactic or typing regressions occurred within the modifications. The architecture is fully prepped and ready for E2E validation against the real Hedera testnet using your `cash-drive` CLI package.
+Everything was fully checked against Next.js linting/TypeScript using `tsc` to verify no syntactic or typing regressions occurred within the modifications. The architecture is fully prepped and ready for E2E validation against the real Hedera testnet using your `agent-drive` CLI package.

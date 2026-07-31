@@ -1,4 +1,4 @@
-import { CashDrive } from "../../client.js";
+import { AgentDrive } from "../../client.js";
 import { readProfile } from "../../agent/configStore.js";
 import { listPendingEntries } from "../../agent/paymentJournal.js";
 import { MissingCredentialsError } from "../../errors.js";
@@ -13,7 +13,7 @@ export async function whoamiCommand(flags: Record<string, FlagValue>, json: bool
     return reportError(new MissingCredentialsError(), json);
   }
 
-  const client = new CashDrive({
+  const client = new AgentDrive({
     apiKey: profile.apiKey,
     baseUrl: profile.baseUrl,
     apiPrefix: profile.apiPrefix,
@@ -38,13 +38,13 @@ export async function whoamiCommand(flags: Record<string, FlagValue>, json: bool
 
     if (me.agent.onboardingState !== "active") {
       writeStdout("");
-      writeStdout(`Onboarding is incomplete (state: ${me.agent.onboardingState}). Run \`cash-drive onboard --resume\` to continue.`);
+      writeStdout(`Onboarding is incomplete (state: ${me.agent.onboardingState}). Run \`agent-drive onboard --resume\` to continue.`);
     }
 
     if (pending.length > 0) {
       writeStdout("");
       writeStdout(
-        `WARNING: ${pending.length} pending payment(s) in ~/.cash-drive/pending/ - a payment may have been submitted without a confirmed purchase. Run \`cash-drive payments recover\`.`,
+        `WARNING: ${pending.length} pending payment(s) in ~/.agent-drive/pending/ - a payment may have been submitted without a confirmed purchase. Run \`agent-drive payments recover\`.`,
       );
     }
     return 0;

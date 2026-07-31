@@ -264,10 +264,10 @@ export async function fulfillPurchase(input: FulfillPurchaseInput): Promise<Fulf
   // Allocate funds in the Smart Contract Treasury
   try {
     await allocateTreasuryFunds(
-      quote.sellerPayoutWallet,
-      quote.resolvedAffiliate?.affiliateUser?.payoutWallet,
-      quote.sellerAmount,
-      quote.resolvedAffiliate?.feeTinybars || BigInt(0)
+      target.type === 'listing' ? doc.seller.payoutWallet : doc.owner.payoutWallet,
+      affiliate?.affiliateUser?.payoutWallet,
+      sellerAmount,
+      affiliate?.feeTinybars || BigInt(0)
     );
   } catch (allocationError) {
     console.error('Failed to allocate treasury funds:', allocationError);

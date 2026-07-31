@@ -30,7 +30,7 @@ function isNodeRuntime(): boolean {
 function buildClientInfo() {
   const isNode = isNodeRuntime();
   return {
-    name: "cash-drive",
+    name: "agent-drive",
     version: SDK_VERSION,
     platform: isNode ? process.platform : typeof navigator !== "undefined" ? navigator.platform : "unknown",
     runtime: isNode ? "node" : "browser",

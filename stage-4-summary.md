@@ -56,7 +56,7 @@ Work spans both packages: `web/` (resource server, migrated off `@hashgraph/sdk`
   shared links, sharing a private `percentOfTinybars` mirroring the SDK's (separate package,
   same integer-floor formula, cannot literally share code). Affiliate resolution checks every
   condition from §1.2.3 explicitly and returns a structured `{applied, code, rate}` summary
-  regardless of outcome — this is what phase 1's `extra.cashdrive.affiliate` is built from,
+  regardless of outcome — this is what phase 1's `extra.agentdrive.affiliate` is built from,
   fixing the silent-failure defect at the SDK/agent boundary without touching backend
   attribution behavior itself.
 
@@ -85,7 +85,7 @@ Work spans both packages: `web/` (resource server, migrated off `@hashgraph/sdk`
   `X-PAYMENT-RESPONSE` headers — not the full `x402HTTPResourceServer` class, which does
   paywall HTML, multi-scheme extension hooks, and dynamic `payTo`/price resolution none of
   which this stage needs; hand-rolling the two-phase handler against the wire types directly
-  matches the spec's exact JSON shape (`extra.cashdrive`) more simply than bending that class
+  matches the spec's exact JSON shape (`extra.agentdrive`) more simply than bending that class
   to fit.
 
 ### SDK: x402 client
@@ -94,7 +94,7 @@ Work spans both packages: `web/` (resource server, migrated off `@hashgraph/sdk`
   profile's private key fresh from disk inside `signPaymentPayload()` on every call and never
   stores it as an instance field — only the `accountId`/`evmAddress` are retained between
   calls, per §4.2's exact instruction.
-- **`sdk/src/agent/paymentJournal.ts`** — `~/.cash-drive/pending/<quoteId>.json`, atomic
+- **`sdk/src/agent/paymentJournal.ts`** — `~/.agent-drive/pending/<quoteId>.json`, atomic
   writes (temp file + `fsync` + `rename`, mirroring `configStore.ts`'s existing pattern),
   written before phase 2 and deleted only after a confirmed `201`.
 - **`sdk/src/resources/payments.ts`** — `PaymentsResource` (`quote`/`balance`/
@@ -109,8 +109,8 @@ Work spans both packages: `web/` (resource server, migrated off `@hashgraph/sdk`
   `@hiero-ledger/sdk`, `@x402/*`, or any `node:` builtin — those only appear as separately
   chunked dynamic imports (`paymentSigner-*.js`, `paymentJournal-*.js`, `configStore-*.js`).
   `PaymentsResource`/`LocalKeySigner`/payment error classes/types are exported only from
-  `cash-drive/agent`, never `cash-drive` (root) — satisfied at the export-surface level, since
-  the underlying `CashDrive` class and its `.payments` property are necessarily shared code
+  `agent-drive/agent`, never `agent-drive` (root) — satisfied at the export-surface level, since
+  the underlying `AgentDrive` class and its `.payments` property are necessarily shared code
   (re-exported identically by both entries), exactly like `client.agent.me()`'s lazy
   config-file read already was.
 - **Retry discipline (§4.4)**: phase 2 (`X-PAYMENT` submission) passes `retry: false`
@@ -123,7 +123,7 @@ Work spans both packages: `web/` (resource server, migrated off `@hashgraph/sdk`
   specifically (network/5xx failures only; a `402` quote response is the success path, not a
   failure), which the `/purchase` deny-list above doesn't affect since it isn't going through
   `HttpClient`'s internal retry loop at all.
-- **New errors** (`sdk/src/errors.ts`, all exported only from `cash-drive/agent`):
+- **New errors** (`sdk/src/errors.ts`, all exported only from `agent-drive/agent`):
   `AgentNotActivatedError`, `InsufficientBalanceError`, `PriceChangedError`,
   `FacilitatorUnavailableError`, `PaymentVerificationError`, `SettlementFailedError` — the
   last three map 1:1 to the backend's `facilitator_unavailable`/`payment_verification_failed`/
@@ -134,7 +134,7 @@ Work spans both packages: `web/` (resource server, migrated off `@hashgraph/sdk`
   this). `purchaseAndClaim()` catches `ConflictError` from the purchase leg specifically (the
   backend's phase-1 "already paid" check now returns `409 conflict`, not a bare `400`) and
   skips straight to `claim()`, per §5.5.
-- **CLI**: `cash-drive payments recover` (`sdk/src/cli/commands/payments.ts`), exit `1` if any
+- **CLI**: `agent-drive payments recover` (`sdk/src/cli/commands/payments.ts`), exit `1` if any
   entry still `needs_investigation` after recovery, `0` otherwise. `whoami` reads the journal
   and warns (with the exact recovery command) whenever it's non-empty.
 
@@ -143,7 +143,7 @@ Work spans both packages: `web/` (resource server, migrated off `@hashgraph/sdk`
 Same throwaway-infrastructure discipline as Stages 1–3, all torn down afterward:
 
 - **MongoDB**: temporary Atlas user `stage4_test_user` (6h auto-`deleteAfter` safety net),
-  `readWrite` on a fresh `cashdrive_stage4_test` database on the existing `cachedrive-dev`
+  `readWrite` on a fresh `agentdrive_stage4_test` database on the existing `cachedrive-dev`
   cluster. Seeded directly via `tsx` scripts (bypassing onboarding, which Stage 2 already
   verified end-to-end): a seller `User`, an agent-owner `User`, an affiliate `User`, several
   `Item`/`Listing`/`SharedLink`/`Affiliate` documents, and an `Agent` with every scope
@@ -163,7 +163,7 @@ Same throwaway-infrastructure discipline as Stages 1–3, all torn down afterwar
   `fulfillPurchase`'s existing try/catch and does not fail the purchase). `.env.local` and all
   scratch seed scripts deleted afterward.
 - **SDK**: built (`npm run build`) and exercised via `dist/agent.js` directly (no mocks) with
-  `CASHDRIVE_CONFIG_DIR` pointed at a hand-written profile matching the activated agent above.
+  `AGENTDRIVE_CONFIG_DIR` pointed at a hand-written profile matching the activated agent above.
 
 **Results:**
 
@@ -198,7 +198,7 @@ Same throwaway-infrastructure discipline as Stages 1–3, all torn down afterwar
   pointing at the listing purchase that had genuinely already landed, one at a nonexistent
   link. `client.payments.recoverPending()` reported the first `recovered` (and deleted its
   journal file) and the second `needs_investigation` (left in place, no re-payment attempted).
-  `cash-drive whoami` correctly warned about the pending entry beforehand; `cash-drive
+  `agent-drive whoami` correctly warned about the pending entry beforehand; `agent-drive
   payments recover` reported it and exited `1`; after manual cleanup, both `whoami` and
   `payments recover` reported clean state and exit `0`.
 - **`InsufficientBalanceError`**: purchasing a listing priced at 100 HBAR against the agent's
@@ -209,7 +209,7 @@ Same throwaway-infrastructure discipline as Stages 1–3, all torn down afterwar
   Mongo; `payments.quote()` threw with `.message === "This agent lacks the \`payments:spend\`
   scope."` and `.requiredScope === "payments:spend"`. Scope restored afterward.
 - **`AgentNotActivatedError`**: a profile with `agent.onboardingState: "funded"` threw the
-  exact spec'd message ("...Run \`cash-drive onboard --resume\`.") before any network call.
+  exact spec'd message ("...Run \`agent-drive onboard --resume\`.") before any network call.
 - **Affiliate transparency (§4.3, the stage's most-emphasized fix), both directions live**:
   - Valid code: quote's `affiliate` was `{applied: true, code, rate: 10}`; the purchase
     produced a **real** `Commission` document for the first time in this system's history
@@ -225,14 +225,14 @@ Same throwaway-infrastructure discipline as Stages 1–3, all torn down afterwar
   clean (only the same two pre-existing React-hooks warnings from Stage 1), and the build
   fails at the same pre-existing `AIChunk.ts` type-check blocker noted in every prior stage —
   not a regression. `sdk`'s `tsc --noEmit`, `npm run build`, `npm run smoke` (ESM+CJS), and
-  `npm run lint:pack` all pass; `attw`'s `node10` resolution failures for `cash-drive/agent`
-  and `cash-drive/node` are the same pre-existing, expected pattern Stage 3 already noted for
-  subpath exports (`cash-drive/node`) — not new. No SDK unit-test suite exists yet (same as
+  `npm run lint:pack` all pass; `attw`'s `node10` resolution failures for `agent-drive/agent`
+  and `agent-drive/node` are the same pre-existing, expected pattern Stage 3 already noted for
+  subpath exports (`agent-drive/node`) — not new. No SDK unit-test suite exists yet (same as
   every prior stage); this stage's own §6 explicitly calls for direct, live verification
   instead, which is what the above is.
 
 All temporary infrastructure was torn down afterward: dev server stopped, `.env.local` and
-scratch seed scripts deleted, all Mongo collections in `cashdrive_stage4_test` dropped, and
+scratch seed scripts deleted, all Mongo collections in `agentdrive_stage4_test` dropped, and
 the Atlas database user deleted (in addition to its 6h auto-expiry safety net). The real
 testnet transactions themselves are of course immutable and left in place, as in every prior
 stage.

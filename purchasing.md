@@ -1,6 +1,6 @@
-# CashDrive Purchasing System
+# AgentDrive Purchasing System
 
-This report details how the purchasing flow works across the CashDrive platform, covering both the Next.js backend and the agent CLI. The system employs a two-phase x402 (L402) protocol to handle quotes and signed payment settlement over the Hedera network.
+This report details how the purchasing flow works across the AgentDrive platform, covering both the Next.js backend and the agent CLI. The system employs a two-phase x402 (L402) protocol to handle quotes and signed payment settlement over the Hedera network.
 
 ## 1. Backend Implementation
 
@@ -47,7 +47,7 @@ The fulfillment step handles everything that happens after the platform treasury
 The CLI provides commands to initiate purchases, abstracting the two-phase protocol for agents.
 
 ### Commands
-- `cash-drive purchase <listing|link> <id> [--affiliate <code>]`
+- `agent-drive purchase <listing|link> <id> [--affiliate <code>]`
 
 ### Orchestration (`executePurchase`)
 The core flow is managed by `executePurchase` in `cli/src/resources/payments.ts`.
@@ -59,7 +59,7 @@ The core flow is managed by `executePurchase` in `cli/src/resources/payments.ts`
 2. **Signing**: 
    - Uses the local `PaymentSigner` to sign the `XPaymentRequirements` quote.
 3. **Journaling**:
-   - Before submitting the actual payment, a `PendingPaymentEntry` is written to a local journal on disk (`~/.cash-drive/pending/`).
+   - Before submitting the actual payment, a `PendingPaymentEntry` is written to a local journal on disk (`~/.agent-drive/pending/`).
    - This ensures that if the process crashes or the network fails during submission, the agent won't silently lose track of a signed, potentially submitted payment.
 4. **Phase 2 (Payment Submit)**:
    - The CLI sends the POST request with the `X-PAYMENT` header.
@@ -68,5 +68,5 @@ The core flow is managed by `executePurchase` in `cli/src/resources/payments.ts`
    - If the server responds with a `201 Created`, the pending journal entry is deleted, and success messages are printed.
 
 ### Recovery (`recoverPending`)
-Because Phase 2 network errors can leave the client unsure if a transaction settled on-chain, the CLI provides a recovery mechanism (`client.payments.recoverPending()` / `cash-drive payments recover`). 
+Because Phase 2 network errors can leave the client unsure if a transaction settled on-chain, the CLI provides a recovery mechanism (`client.payments.recoverPending()` / `agent-drive payments recover`). 
 It checks the backend state (`GET /listings/:id/purchase-status` or `/shared-links/:id`) to see if the pending transactions actually landed, safely clearing the journal or flagging them for investigation without automatically double-paying.

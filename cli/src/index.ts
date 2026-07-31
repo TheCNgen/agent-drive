@@ -1,4 +1,4 @@
-export { CashDrive, type CashDriveOptions } from "./client.js";
+export { AgentDrive, type AgentDriveOptions } from "./client.js";
 export { AgentResource, type RegisterWalletInput, type ActivateInput } from "./resources/agent.js";
 export { ItemsResource } from "./resources/items.js";
 export { ListingsResource } from "./resources/listings.js";
@@ -21,7 +21,7 @@ export {
 export { SDK_VERSION } from "./version.js";
 
 export {
-  CashDriveError,
+  AgentDriveError,
   ValidationError,
   ClaimInvalidError,
   AuthenticationError,
@@ -38,8 +38,8 @@ export {
   NetworkError,
   TimeoutError,
   ConfigCorruptError,
-  isCashDriveError,
-  type CashDriveErrorOptions,
+  isAgentDriveError,
+  type AgentDriveErrorOptions,
 } from "./errors.js";
 
 export type {

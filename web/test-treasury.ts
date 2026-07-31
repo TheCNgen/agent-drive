@@ -58,8 +58,8 @@ async function main() {
       new ContractFunctionParameters()
         .addAddress(sellerEvmAddress)
         .addAddress(affiliateEvmAddress)
-        .addUint256(sellerAmountTinybars.toString())
-        .addUint256(affiliateAmountTinybars.toString())
+        .addUint256(Number(sellerAmountTinybars))
+        .addUint256(Number(affiliateAmountTinybars))
     );
     
   try {

@@ -1,4 +1,4 @@
-import { CashDrive } from "../../client.js";
+import { AgentDrive } from "../../client.js";
 import { readProfile } from "../../agent/configStore.js";
 import { MissingCredentialsError } from "../../errors.js";
 import { flagString, type FlagValue } from "../run.js";
@@ -14,7 +14,7 @@ export async function transactionsCommand(
   const profile = await readProfile(profileName);
   if (!profile) return reportError(new MissingCredentialsError(), json);
 
-  const client = new CashDrive({
+  const client = new AgentDrive({
     apiKey: profile.apiKey,
     baseUrl: profile.baseUrl,
     apiPrefix: profile.apiPrefix,
@@ -34,7 +34,7 @@ export async function transactionsCommand(
         result = await client.transactions.earnings();
         break;
       default:
-        writeStderr(`Usage: cash-drive transactions <list|commissions|earnings>`);
+        writeStderr(`Usage: agent-drive transactions <list|commissions|earnings>`);
         return 2;
     }
 

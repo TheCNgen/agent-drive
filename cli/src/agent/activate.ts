@@ -13,7 +13,7 @@ export interface ActivateAccountResult {
 }
 
 export const ACTIVATION_RETRY_MESSAGE =
-  "The agent's Hedera account could not be activated. Run `cash-drive onboard --resume` to retry.";
+  "The agent's Hedera account could not be activated. Run `agent-drive onboard --resume` to retry.";
 const RETRY_MESSAGE = ACTIVATION_RETRY_MESSAGE;
 
 function buildClient(network: HederaNetwork): Client {

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import type { PendingPaymentEntry } from "../types/payment.js";
 import { configDir } from "./paths.js";
 
-/** ~/.cash-drive/pending - one file per in-flight payment, named `<quoteId>.json`. */
+/** ~/.agent-drive/pending - one file per in-flight payment, named `<quoteId>.json`. */
 export function pendingDir(): string {
   return join(configDir(), "pending");
 }

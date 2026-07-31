@@ -1,6 +1,6 @@
 import { MissingCredentialsError } from "./errors.js";
 
-export const DEFAULT_BASE_URL = "https://app.cashdrive.io";
+export const DEFAULT_BASE_URL = "https://app.agentdrive.io";
 export const DEFAULT_API_PREFIX = "/api";
 
 export interface CredentialInputs {
@@ -49,12 +49,12 @@ async function readFileProfileConnection(profileName: string | undefined): Promi
  * options -> env -> on-disk-profile chain. First hit wins per field; sources are never merged.
  */
 export async function resolveConnection(inputs: CredentialInputs): Promise<ResolvedConnection> {
-  let apiKey = inputs.apiKey ?? env("CASHDRIVE_API_KEY");
-  let baseUrl = inputs.baseUrl ?? env("CASHDRIVE_BASE_URL");
+  let apiKey = inputs.apiKey ?? env("AGENTDRIVE_API_KEY");
+  let baseUrl = inputs.baseUrl ?? env("AGENTDRIVE_BASE_URL");
   let apiPrefix = inputs.apiPrefix;
 
   if (apiKey === undefined || baseUrl === undefined || apiPrefix === undefined) {
-    const profileName = inputs.profile ?? env("CASHDRIVE_PROFILE");
+    const profileName = inputs.profile ?? env("AGENTDRIVE_PROFILE");
     const fileConnection = await readFileProfileConnection(profileName);
     if (fileConnection) {
       apiKey = apiKey ?? fileConnection.apiKey;

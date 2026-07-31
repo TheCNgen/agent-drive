@@ -1,5 +1,5 @@
 /**
- * A minimal, dependency-free stand-in for the CashDrive backend's agent lane, so the SDK
+ * A minimal, dependency-free stand-in for the AgentDrive backend's agent lane, so the SDK
  * and CLI can be exercised locally without the full Next.js app or MongoDB. It genuinely
  * polls the public Hedera testnet mirror node for funding/activation state, so a real
  * `hcli account transfer` against the printed address is enough to drive a full
@@ -304,6 +304,6 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  process.stdout.write(`cash-drive mock server listening on http://localhost:${PORT}\n`);
+  process.stdout.write(`agent-drive mock server listening on http://localhost:${PORT}\n`);
   process.stdout.write(`POST http://localhost:${PORT}/__mock/mint-claim to mint a fresh claim code\n`);
 });
