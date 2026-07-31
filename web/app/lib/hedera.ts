@@ -118,8 +118,8 @@ export async function allocateTreasuryFunds(
       new ContractFunctionParameters()
         .addAddress(sellerWallet)
         .addAddress(safeAffiliateWallet)
-        .addUint256(sellerAmountTinybars)
-        .addUint256(affiliateAmountTinybars)
+        .addUint256(sellerAmountTinybars.toString())
+        .addUint256(affiliateAmountTinybars.toString())
     );
 
   try {

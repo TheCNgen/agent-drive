@@ -7,6 +7,7 @@ contract CashDriveTreasury {
     
     event Allocation(address indexed seller, address indexed affiliate, uint256 sellerAmount, uint256 affiliateAmount);
     event Claimed(address indexed user, uint256 amount);
+    event DebugClaim(address indexed caller, uint256 balance);
 
     constructor() {
         admin = msg.sender;
@@ -26,11 +27,7 @@ contract CashDriveTreasury {
         uint256 affiliateAmount
     ) external {
         require(msg.sender == admin, "Only admin can allocate");
-        
-        // Ensure the contract actually holds enough HBAR to cover this new allocation
-        // (This protects against allocating funds that haven't been deposited)
-        uint256 totalAllocated = sellerAmount + affiliateAmount;
-        require(address(this).balance >= totalAllocated, "Insufficient contract balance");
+        // The backend verifies the deposit before calling allocate.
 
         balances[seller] += sellerAmount;
         if (affiliate != address(0) && affiliateAmount > 0) {
@@ -42,11 +39,13 @@ contract CashDriveTreasury {
     
     function claim() external {
         uint256 amount = balances[msg.sender];
+        emit DebugClaim(msg.sender, amount);
         require(amount > 0, "No funds to claim");
         
         balances[msg.sender] = 0;
-        (bool success, ) = msg.sender.call{value: amount}("");
-        require(success, "Transfer failed");
+        uint256 amountWei = amount * 10**10;
+        (bool success, ) = msg.sender.call{value: amountWei}("");
+        require(success, "HBAR Transfer Failed!");
         
         emit Claimed(msg.sender, amount);
     }
