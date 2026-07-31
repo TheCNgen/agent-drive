@@ -12,7 +12,7 @@ import { FileViewer } from "./components/FileViewer";
 // });
 
 export const metadata: Metadata = {
-  title: "Cash Drive",
+  title: "Agent Drive",
   description: "Earn money by monetizing your content using our Drive Links",
 };
 
