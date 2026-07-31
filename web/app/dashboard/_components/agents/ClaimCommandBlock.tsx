@@ -14,7 +14,7 @@ export default function ClaimCommandBlock({ claimCode, expiresAt, onExpired, onR
   const [hasExpired, setHasExpired] = useState(false);
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   
-  const instructionStr = `Install the skill at ${origin}/skill.md and set up this agent by running: npx -y agent-drive@latest onboard --claim ${claimCode} --base-url ${origin}`;
+  const instructionStr = `Install the skill at ${origin}/skill.md (do not just read it) and set up this agent by running: npx -y hedera-agent-drive@latest onboard --claim ${claimCode} --base-url ${origin}`;
 
   useEffect(() => {
     const end = new Date(expiresAt).getTime();
