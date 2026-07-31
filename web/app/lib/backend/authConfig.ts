@@ -63,9 +63,6 @@ export const authOptions: AuthOptions = {
           if (existing) throw new Error("User already exists with this email");
 
 
-          console.log("Creating Hedera account for user...");
-          const { accountId, encryptedPrivateKey, evmAddress } = await createHederaAccount();
-
           const session = await mongoose.startSession();
           
           try {
@@ -82,8 +79,7 @@ export const authOptions: AuthOptions = {
                 email: credentials.email,
                 password: credentials.password,
                 payoutWallet: credentials.payoutWallet,
-                wallet: evmAddress,
-                accountId
+                wallet: credentials.payoutWallet,
               });
 
               const rootFolder = new Item({
