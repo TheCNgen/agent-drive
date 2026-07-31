@@ -22,7 +22,7 @@ export default function AgentDetailModal({ agentId, isOpen, onClose, onRefetchLi
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="flex flex-col bg-amber-100 border-2 border-black brutal-shadow-left w-[90vw] h-[85vh] m-auto">
+      <div className="flex flex-col bg-purple-100 border-2 border-black brutal-shadow-left w-[90vw] h-[85vh] m-auto">
         <div className="p-4 border-b-2 border-black bg-white flex items-center justify-between shrink-0">
           <div>
             <div className="text-sm text-gray-500 font-freeman mb-1">
@@ -67,7 +67,7 @@ export default function AgentDetailModal({ agentId, isOpen, onClose, onRefetchLi
                     {data.agent.stats.successRate !== null ? `${data.agent.stats.successRate}% success` : '—'}
                   </p>
                 </div>
-                <div className="bg-yellow-100 border-2 border-black brutal-shadow-left p-4 text-center">
+                <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-4 text-center">
                   <h3 className="font-anton text-2xl">{formatHbarWithUnit(data.wallet.balanceTinybars)}</h3>
                   <p className="font-freeman text-sm">Balance</p>
                   <p className="text-xs text-gray-600 mt-1" title="HBAR only on Hedera testnet">

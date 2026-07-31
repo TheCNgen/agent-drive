@@ -105,17 +105,17 @@ export default function RoadmapPage() {
               <RoadmapCard 
                 icon="🔄"
                 text="Deploy MCP on scalable infra"
-                bgColor="bg-amber-100"
+                bgColor="bg-purple-100"
               />
               <RoadmapCard 
                 icon="⚙️"
                 text="Launch Public AI API access"
-                bgColor="bg-amber-100"
+                bgColor="bg-purple-100"
               />
               <RoadmapCard 
                 icon="🧠"
                 text="Enable Auto-Responder Agents"
-                bgColor="bg-amber-100"
+                bgColor="bg-purple-100"
               />
             </div>
           </div>

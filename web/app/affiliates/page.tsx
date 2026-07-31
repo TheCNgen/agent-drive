@@ -196,7 +196,7 @@ export default function AffiliatesPage() {
             <h3 className="font-anton text-2xl">{formatHbar(stats.totalEarned)}</h3>
             <p className="font-freeman text-sm">Total Earned</p>
           </div>
-          <div className="bg-yellow-100 border-2 border-black brutal-shadow-left p-4 text-center">
+          <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-4 text-center">
             <h3 className="font-anton text-2xl">{formatHbar(stats.pendingCommissions)}</h3>
             <p className="font-freeman text-sm">Pending Commissions</p>
           </div>
@@ -215,7 +215,7 @@ export default function AffiliatesPage() {
           <button
             onClick={() => setActiveTab('owned')}
             className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${
-              activeTab === 'owned' ? 'bg-[#FFD000]' : 'bg-white hover:bg-gray-50'
+              activeTab === 'owned' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'
             }`}
           >
             My Content Affiliates
@@ -223,7 +223,7 @@ export default function AffiliatesPage() {
           <button
             onClick={() => setActiveTab('affiliate')}
             className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${
-              activeTab === 'affiliate' ? 'bg-[#FFD000]' : 'bg-white hover:bg-gray-50'
+              activeTab === 'affiliate' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'
             }`}
           >
             My Partnerships
@@ -231,7 +231,7 @@ export default function AffiliatesPage() {
           <button
             onClick={() => setActiveTab('transactions')}
             className={`flex-1 px-6 py-3 font-freeman ${
-              activeTab === 'transactions' ? 'bg-[#FFD000]' : 'bg-white hover:bg-gray-50'
+              activeTab === 'transactions' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'
             }`}
           >
             Transactions
@@ -248,7 +248,7 @@ export default function AffiliatesPage() {
             <p className="font-freeman text-lg text-red-700">{error}</p>
             <button
               onClick={fetchData}
-              className="mt-4 button-primary bg-[#FFD000] px-6 py-2"
+              className="mt-4 button-primary bg-[#8544FA] px-6 py-2"
             >
               Try Again
             </button>
@@ -258,7 +258,7 @@ export default function AffiliatesPage() {
             {activeTab === 'transactions' ? (
               <div className="space-y-4">
                 {transactions.length === 0 ? (
-                  <div className="text-center py-12 bg-amber-100 border-2 border-black brutal-shadow-left">
+                  <div className="text-center py-12 bg-purple-100 border-2 border-black brutal-shadow-left">
                     <p className="font-freeman text-lg">No transactions found</p>
                   </div>
                 ) : (
@@ -281,7 +281,7 @@ export default function AffiliatesPage() {
                         </div>
                         <span className={`px-3 py-1 text-xs font-freeman border-2 border-black ${
                           transaction.status === 'paid' ? 'bg-green-100' :
-                          transaction.status === 'pending' ? 'bg-yellow-100' :
+                          transaction.status === 'pending' ? 'bg-purple-100' :
                           'bg-red-100'
                         }`}>
                           {transaction.status.toUpperCase()}
@@ -294,7 +294,7 @@ export default function AffiliatesPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {affiliates.length === 0 ? (
-                  <div className="col-span-full text-center py-12 bg-amber-100 border-2 border-black brutal-shadow-left">
+                  <div className="col-span-full text-center py-12 bg-purple-100 border-2 border-black brutal-shadow-left">
                     <p className="font-freeman text-lg">
                       {activeTab === 'owned' 
                         ? 'No affiliates set up for your content yet'

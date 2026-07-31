@@ -53,7 +53,7 @@ export const UploadModal = ({ isOpen, onClose, onUpload, parentId }: UploadModal
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-5 ">
-      <div className="bg-amber-100 border-2 border-black brutal-shadow-left w-96 max-h-[90vh] overflow-y-auto">
+      <div className="bg-purple-100 border-2 border-black brutal-shadow-left w-96 max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b-2 border-black">
           <div className="flex items-center justify-between">
             <h2 className="font-anton text-3xl">UPLOAD</h2>

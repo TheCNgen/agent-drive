@@ -4,14 +4,14 @@
 @theme {
   --font-anton: "Anton", sans-serif; 
   --font-freeman: "Freeman", sans-serif; 
-  --color-primary: #FFD000;
-  --color-secondary: #FFBB00;
+  --color-primary: #8544FA;
+  --color-secondary: #390778;
   --color-black: #2c2a29;
   --color-white: #FEFBEA;
 }
 
 ::selection {
-  background-color: rgba(253, 200, 0, 0.8);
+  background-color: rgba(133, 68, 250, 0.8);
   color: rgba(0, 0, 0, 0.5);
 }
 

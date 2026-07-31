@@ -235,7 +235,7 @@ export default function MarketplacePage() {
         </div>
 
         {listings.length === 0 ? (
-          <div className="mt-12 text-center bg-amber-100 p-8 border-2 border-black brutal-shadow-left">
+          <div className="mt-12 text-center bg-purple-100 p-8 border-2 border-black brutal-shadow-left">
             <div className="text-6xl mb-4">
               {(filters.search || filters.tags.length > 0) ? '🔍' : '🛍️'}
             </div>

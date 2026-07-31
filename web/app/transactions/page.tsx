@@ -143,7 +143,7 @@ export default function TransactionsPage() {
               <select
                 value={filters?.type}
                 onChange={(e) => handleFilterChange({ type: e.target.value as any })}
-                className="w-full bg-amber-100 border-2 border-black p-2 font-freeman brutal-shadow-left focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-purple-100 border-2 border-black p-2 font-freeman brutal-shadow-left focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">All Transactions</option>
                 <option value="purchases">Purchases</option>
@@ -158,7 +158,7 @@ export default function TransactionsPage() {
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange({ status: e.target.value as any })}
-                className="w-full bg-amber-100 border-2 border-black p-2 font-freeman brutal-shadow-left focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-purple-100 border-2 border-black p-2 font-freeman brutal-shadow-left focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All Statuses</option>
                 <option value="completed">Completed</option>
@@ -219,7 +219,7 @@ export default function TransactionsPage() {
                                   {transaction.paymentFlow === 'admin' && 
                                    transaction.affiliateInfo?.isAffiliateSale && 
                                    session?.user?.id === transaction.seller._id && (
-                                    <span className="px-3 py-1 bg-yellow-100 border-2 border-black text-sm font-freeman">
+                                    <span className="px-3 py-1 bg-purple-100 border-2 border-black text-sm font-freeman">
                                       Affiliate Sale
                                     </span>
                                   )}

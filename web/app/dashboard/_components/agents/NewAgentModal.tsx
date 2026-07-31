@@ -103,7 +103,7 @@ export default function NewAgentModal({ isOpen, onClose, onAgentCreated, initial
   if (!agentId) {
     return (
       <div className="fixed inset-0 bg-black/90 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-amber-100 border-2 border-black brutal-shadow-left w-full max-w-md">
+        <div className="bg-purple-100 border-2 border-black brutal-shadow-left w-full max-w-md">
           <div className="p-6 border-b-2 border-black flex items-center justify-between">
             <h2 className="font-anton text-3xl">New Agent</h2>
             <button onClick={onClose} className="text-2xl hover:text-gray-600">×</button>
@@ -125,7 +125,7 @@ export default function NewAgentModal({ isOpen, onClose, onAgentCreated, initial
               <button
                 type="submit"
                 disabled={isSubmitting || !name.trim()}
-                className="button-primary bg-[#FFD000] px-6 py-2 flex items-center gap-2 disabled:opacity-50"
+                className="button-primary bg-[#8544FA] px-6 py-2 flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? <Loader /> : 'Create agent'}
               </button>
@@ -139,15 +139,15 @@ export default function NewAgentModal({ isOpen, onClose, onAgentCreated, initial
   // State B & C
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-amber-100 border-2 border-black brutal-shadow-left w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b-2 border-black flex items-center justify-between sticky top-0 bg-amber-100 z-10">
+      <div className="bg-purple-100 border-2 border-black brutal-shadow-left w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b-2 border-black flex items-center justify-between sticky top-0 bg-purple-100 z-10">
           <h2 className="font-anton text-3xl">Setup Agent</h2>
           <button onClick={() => { onAgentCreated(); onClose(); }} className="text-2xl hover:text-gray-600">×</button>
         </div>
         <div className="p-6 space-y-6">
           {alreadyClaimed ? (
-            <div className="bg-yellow-50 p-4 border-2 border-black brutal-shadow-left">
-              <p className="font-freeman text-yellow-800">The agent already redeemed a code — setup is in progress.</p>
+            <div className="bg-purple-50 p-4 border-2 border-black brutal-shadow-left">
+              <p className="font-freeman text-purple-800">The agent already redeemed a code — setup is in progress.</p>
             </div>
           ) : claimCode && claimExpiresAt ? (
             <ClaimCommandBlock
@@ -158,7 +158,7 @@ export default function NewAgentModal({ isOpen, onClose, onAgentCreated, initial
             />
           ) : (
             <div className="bg-white p-4 border-2 border-black">
-              <button onClick={handleRegenerate} className="button-primary bg-[#FFD000] px-4 py-2 text-sm">
+              <button onClick={handleRegenerate} className="button-primary bg-[#8544FA] px-4 py-2 text-sm">
                 Regenerate code
               </button>
             </div>

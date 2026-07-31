@@ -161,7 +161,7 @@ export default function TransactionDetailPage() {
         </nav>
 
         {/* Receipt */}
-        <div className="bg-amber-100 border-2 border-black brutal-shadow-left">
+        <div className="bg-purple-100 border-2 border-black brutal-shadow-left">
           {/* Header */}
           <div className="p-6 border-b-2 border-black bg-primary">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -267,7 +267,7 @@ export default function TransactionDetailPage() {
                 {transaction.paymentFlow === 'admin' && 
                  transaction.affiliateInfo?.isAffiliateSale && 
                  session?.user?.id === transaction.seller._id && (
-                  <div className="mt-4 p-3 bg-yellow-50 border-2 border-black">
+                  <div className="mt-4 p-3 bg-purple-50 border-2 border-black">
                     <h3 className="text-sm font-medium text-gray-700 mb-2">Affiliate Distribution</h3>
                     <div className="space-y-3">
                       {transaction.affiliateInfo.commissionDistribution.map((commission, index) => (
@@ -295,7 +295,7 @@ export default function TransactionDetailPage() {
                  transaction.affiliateInfo?.commissionDistribution.some(c => 
                    c.affiliate?.affiliateUser._id === session?.user?.id
                  ) && (
-                  <div className="mt-4 p-3 bg-yellow-50 border-2 border-black">
+                  <div className="mt-4 p-3 bg-purple-50 border-2 border-black">
                     <h3 className="text-sm font-medium text-gray-700 mb-2">Commission Details</h3>
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">

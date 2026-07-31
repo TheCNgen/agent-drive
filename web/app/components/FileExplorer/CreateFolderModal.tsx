@@ -41,7 +41,7 @@ export const CreateFolderModal = ({ isOpen, onClose, onCreateFolder, parentId }:
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-amber-100 border-2 border-black brutal-shadow-left p-6 w-96">
+      <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-6 w-96">
         <h2 className="font-anton text-3xl mb-6">Create Folder</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">

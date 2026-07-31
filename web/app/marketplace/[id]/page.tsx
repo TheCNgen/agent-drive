@@ -213,7 +213,7 @@ export default function ListingDetailPage() {
           </Link>
         </nav>
 
-        <div className="bg-amber-100 border-2 border-black brutal-shadow-left">
+        <div className="bg-purple-100 border-2 border-black brutal-shadow-left">
           {/* Header */}
           <div className="p-6 border-b-2 border-black">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

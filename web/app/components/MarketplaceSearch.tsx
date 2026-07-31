@@ -66,7 +66,7 @@ export default function MarketplaceSearch({
   ), []);
 
   return (
-    <div className="bg-amber-100 border-2 border-black brutal-shadow-left p-6 mb-8">
+    <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-6 mb-8">
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1 relative">
@@ -112,7 +112,7 @@ export default function MarketplaceSearch({
                   {availableTags.map((tag) => (
                     <label
                       key={tag}
-                      className="flex items-center px-4 py-2 text-sm font-freeman hover:bg-amber-100 cursor-pointer"
+                      className="flex items-center px-4 py-2 text-sm font-freeman hover:bg-purple-100 cursor-pointer"
                     >
                       <input
                         type="checkbox"
@@ -155,7 +155,7 @@ export default function MarketplaceSearch({
               {tag}
               <button
                 onClick={() => handleTagToggle(tag)}
-                className="ml-2 hover:text-amber-700"
+                className="ml-2 hover:text-purple-700"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

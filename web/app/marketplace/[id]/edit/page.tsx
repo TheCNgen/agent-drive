@@ -184,7 +184,7 @@ export default function EditListingPage() {
           </Link>
         </nav>
 
-        <div className="bg-amber-100 border-2 border-black brutal-shadow-left p-8">
+        <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-8">
           <div className="border-b-2 border-black pb-4">
             <h1 className="heading-text-2 text-5xl font-anton text-center">EDIT LISTING</h1>
             <p className="mt-1 text-center font-freeman">

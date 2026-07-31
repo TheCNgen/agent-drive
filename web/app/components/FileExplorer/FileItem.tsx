@@ -56,7 +56,7 @@ export const FileItem = ({ item, onItemClick, onListToMarketplace, onShareItem, 
         <div
           onClick={handleItemClick}
           className={`
-            bg-amber-100 hover:bg-white border-2 border-black button-primary
+            bg-purple-100 hover:bg-white border-2 border-black button-primary
             transition-all duration-100 cursor-pointer p-4
             h-[140px]
             ${isHovered ? 'translate-x-1 translate-y-1 brutal-shadow-center' : ''}

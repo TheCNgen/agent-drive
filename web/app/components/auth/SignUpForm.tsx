@@ -55,14 +55,14 @@ export default function SignUpForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8 relative">
-      <div className="max-w-md w-full space-y-8 bg-amber-100 p-8 border-2 border-black brutal-shadow-left reltive z-10">
+      <div className="max-w-md w-full space-y-8 bg-purple-100 p-8 border-2 border-black brutal-shadow-left reltive z-10">
         <div>
           <h2 className="heading-text-2 text-5xl font-anton text-center mb-3">
             SIGN UP
           </h2>
           <p className="mt-2 text-center text-lg font-freeman">
             Or{' '}
-            <Link href="/auth/signin" className="text-amber-600 underline hover:text-black transition-all duration-300">
+            <Link href="/auth/signin" className="text-purple-600 underline hover:text-black transition-all duration-300">
               sign in to your account
             </Link>
           </p>

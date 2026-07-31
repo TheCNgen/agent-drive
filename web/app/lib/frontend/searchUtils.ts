@@ -4,7 +4,7 @@ export function highlightSearchTerm(text: string, searchTerm: string): string {
   }
   
   const regex = new RegExp(`(${searchTerm.trim()})`, 'gi');
-  return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+  return text.replace(regex, '<mark class="bg-purple-200 px-1 rounded">$1</mark>');
 }
 
 export function createHighlightedElement(text: string, searchTerm: string) {

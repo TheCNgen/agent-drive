@@ -15,7 +15,7 @@ export default function AgentStatusPill({ state }: { state: OnboardingState }) {
       break;
     case 'wallet':
       label = 'Awaiting deposit';
-      colorClass = 'bg-yellow-100 text-yellow-800';
+      colorClass = 'bg-purple-100 text-purple-800';
       break;
     case 'funded':
       label = 'Activating';

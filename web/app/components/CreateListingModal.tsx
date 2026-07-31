@@ -108,7 +108,7 @@ export default function CreateListingModal({
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-amber-100 border-2 border-black brutal-shadow-left w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-purple-100 border-2 border-black brutal-shadow-left w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b-2 border-black">
           <div className="flex items-center justify-between">
             <h2 className="font-anton text-3xl">Create Listing</h2>
@@ -216,7 +216,7 @@ export default function CreateListingModal({
                     name="defaultCommissionRate"
                     value={formData.defaultCommissionRate}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-white border-2 border-black font-freeman focus:outline-none focus:border-[#FFD000]"
+                    className="w-full px-3 py-2 bg-white border-2 border-black font-freeman focus:outline-none focus:border-[#8544FA]"
                     min="0"
                     max="100"
                     step="0.1"

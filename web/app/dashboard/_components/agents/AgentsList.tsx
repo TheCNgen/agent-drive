@@ -74,7 +74,7 @@ export default function AgentsList({ agents, onSelectAgent, onResumeSetup }: Age
                         e.stopPropagation();
                         onResumeSetup(agent.id);
                       }}
-                      className="text-[#FFD000] hover:text-yellow-600 font-bold underline px-2 py-1 transition-colors"
+                      className="text-[#8544FA] hover:text-purple-600 font-bold underline px-2 py-1 transition-colors"
                     >
                       Resume setup
                     </button>

@@ -67,7 +67,7 @@ export default function SettingsTab() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-[#FFD000] border-2 border-black px-6 py-2 font-freeman hover:bg-yellow-400 disabled:opacity-50 brutal-shadow-sm transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
+            className="bg-[#8544FA] border-2 border-black px-6 py-2 font-freeman hover:bg-purple-400 disabled:opacity-50 brutal-shadow-sm transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
           >
             {saving ? 'Saving...' : 'Save Wallet'}
           </button>

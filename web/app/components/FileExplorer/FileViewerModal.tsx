@@ -165,7 +165,7 @@ export const FileViewerModal = ({ isOpen, onClose, item }: FileViewerModalProps)
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
       <div 
-        className={`flex flex-col bg-amber-100 border-2 border-black brutal-shadow-left ${
+        className={`flex flex-col bg-purple-100 border-2 border-black brutal-shadow-left ${
           isFullscreen 
             ? 'w-screen h-screen m-0' 
             : 'w-[90vw] h-[85vh] m-auto'

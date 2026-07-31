@@ -45,7 +45,7 @@ export default function AgentsTab() {
         <h2 className="font-anton text-3xl">AGENTS</h2>
         <button
           onClick={handleOpenNew}
-          className="button-primary bg-[#FFD000] px-6 py-2 text-lg flex items-center gap-2 duration-100"
+          className="button-primary bg-[#8544FA] px-6 py-2 text-lg flex items-center gap-2 duration-100"
         >
           + New agent
         </button>
@@ -61,7 +61,7 @@ export default function AgentsTab() {
           </p>
           <button
             onClick={handleOpenNew}
-            className="button-primary bg-[#FFD000] px-6 py-2 text-lg flex items-center justify-center mx-auto"
+            className="button-primary bg-[#8544FA] px-6 py-2 text-lg flex items-center justify-center mx-auto"
           >
             + New agent
           </button>

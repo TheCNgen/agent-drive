@@ -158,7 +158,7 @@ export default function SharedLinkPage() {
           </Link>
         </div> */}
 
-        <div className="bg-amber-100 border-2 border-black brutal-shadow-left">
+        <div className="bg-purple-100 border-2 border-black brutal-shadow-left">
           {/* Header */}
           <div className="bg-primary border-b-2 border-black p-6">
             <div className="flex items-center gap-4">
@@ -198,7 +198,7 @@ export default function SharedLinkPage() {
                 {link?.type === 'monetized' && link.priceTinybars && ` - ${formatHbar(link.priceTinybars)}`}
               </span>
               {isOwner && (
-                <span className="ml-2 px-3 py-1 bg-amber-200 border-2 border-black brutal-shadow-center font-freeman inline-block">
+                <span className="ml-2 px-3 py-1 bg-purple-200 border-2 border-black brutal-shadow-center font-freeman inline-block">
                   👤 You are the owner
                 </span>
               )}

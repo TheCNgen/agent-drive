@@ -93,7 +93,7 @@ export default function AffiliateCard({
   };
 
   return (
-    <div className="bg-amber-100 border-2 border-black brutal-shadow-left">
+    <div className="bg-purple-100 border-2 border-black brutal-shadow-left">
       <div className="bg-white border-b-2 border-black p-4">
         <div className="flex justify-between items-start">
           <div className="flex-1">
@@ -201,7 +201,7 @@ export default function AffiliateCard({
               setCopyAgentSuccess(true);
               setTimeout(() => setCopyAgentSuccess(false), 2000);
             }}
-            className="w-full bg-[#FFD000] border-2 border-black px-4 py-2 font-freeman text-sm hover:-translate-y-0.5 hover:-translate-x-0.5 brutal-shadow-center transition-all flex flex-col items-center justify-center"
+            className="w-full bg-[#8544FA] border-2 border-black px-4 py-2 font-freeman text-sm hover:-translate-y-0.5 hover:-translate-x-0.5 brutal-shadow-center transition-all flex flex-col items-center justify-center"
           >
             <span className="text-base">{copyAgentSuccess ? 'Copied!' : 'Copy CLI Instructions'}</span>
             <span className="text-xs opacity-80 mt-0.5">for agent to buy</span>
@@ -221,7 +221,7 @@ export default function AffiliateCard({
                 step="0.1"
                 value={editCommission}
                 onChange={(e) => setEditCommission(parseFloat(e.target.value))}
-                className="w-full px-2 py-1 border-2 border-black font-freeman focus:outline-none focus:border-[#FFD000]"
+                className="w-full px-2 py-1 border-2 border-black font-freeman focus:outline-none focus:border-[#8544FA]"
               />
             </div>
             <div>
@@ -229,7 +229,7 @@ export default function AffiliateCard({
               <select
                 value={editStatus}
                 onChange={(e) => setEditStatus(e.target.value as any)}
-                className="w-full px-2 py-1 border-2 border-black font-freeman focus:outline-none focus:border-[#FFD000]"
+                className="w-full px-2 py-1 border-2 border-black font-freeman focus:outline-none focus:border-[#8544FA]"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -246,7 +246,7 @@ export default function AffiliateCard({
               <button
                 onClick={handleUpdate}
                 disabled={loading}
-                className="flex-1 button-primary bg-[#FFD000] px-3 py-1 text-sm disabled:opacity-50"
+                className="flex-1 button-primary bg-[#8544FA] px-3 py-1 text-sm disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Update'}
               </button>

@@ -9,7 +9,7 @@ export const DashboardCard = () => {
   
   return (
     <div className="max-w-4xl mx-auto mb-12">
-      <div className="bg-amber-100 border-2 border-black brutal-shadow-left p-6">
+      <div className="bg-purple-100 border-2 border-black brutal-shadow-left p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
             <p className="font-freeman text-xl mb-1">

@@ -99,7 +99,7 @@ function ReferralUrlModal({ isOpen, onClose, affiliateCode, contentId, contentTy
             </div>
           </div>
 
-          <div className="bg-yellow-50 border-2 border-yellow-300 p-3 mt-4">
+          <div className="bg-purple-50 border-2 border-purple-300 p-3 mt-4">
             <h4 className="font-freeman text-sm font-bold mb-2">💡 How it works:</h4>
             <ul className="font-freeman text-xs space-y-1">
               <li>• Share your referral URL with others</li>
@@ -111,7 +111,7 @@ function ReferralUrlModal({ isOpen, onClose, affiliateCode, contentId, contentTy
           <div className="flex gap-3 pt-4">
             <button
               onClick={onClose}
-              className="flex-1 button-primary bg-[#FFD000] px-4 py-2"
+              className="flex-1 button-primary bg-[#8544FA] px-4 py-2"
             >
               Got it!
             </button>
@@ -230,7 +230,7 @@ export default function AffiliateSetupModal({
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white border-2 border-black brutal-shadow-left max-w-md w-full">
-          <div className="bg-[#FFD000] border-b-2 border-black p-4">
+          <div className="bg-[#8544FA] border-b-2 border-black p-4">
             <div className="flex justify-between items-center">
               <h2 className="font-anton text-xl">
                 {mode === 'become' ? 'BECOME AN AFFILIATE' : 'SET UP AFFILIATE'}
@@ -271,7 +271,7 @@ export default function AffiliateSetupModal({
                     type="email"
                     value={affiliateEmail}
                     onChange={(e) => setAffiliateEmail(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-black font-freeman focus:outline-none focus:border-[#FFD000]"
+                    className="w-full px-3 py-2 border-2 border-black font-freeman focus:outline-none focus:border-[#8544FA]"
                     placeholder="Enter affiliate's email address"
                     required
                   />
@@ -288,7 +288,7 @@ export default function AffiliateSetupModal({
                     step="0.1"
                     value={commissionRate}
                     onChange={(e) => setCommissionRate(parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border-2 border-black font-freeman focus:outline-none focus:border-[#FFD000]"
+                    className="w-full px-3 py-2 border-2 border-black font-freeman focus:outline-none focus:border-[#8544FA]"
                     required
                   />
                   <div className="mt-2 text-xs font-freeman text-gray-600">
@@ -316,7 +316,7 @@ export default function AffiliateSetupModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 button-primary bg-[#FFD000] px-4 py-2 disabled:opacity-50"
+                className="flex-1 button-primary bg-[#8544FA] px-4 py-2 disabled:opacity-50"
               >
                 {loading 
                   ? (mode === 'become' ? 'Joining...' : 'Creating...') 

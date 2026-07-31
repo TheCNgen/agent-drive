@@ -70,7 +70,7 @@ export default function AuditTab() {
             <div key={log.sequenceNumber} className="bg-white border-2 border-black p-4 brutal-shadow-left hover:-translate-y-1 hover:-translate-x-1 transition-transform">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <span className="px-3 py-1 bg-[#FFD000] border-2 border-black font-anton text-sm inline-block">
+                  <span className="px-3 py-1 bg-[#8544FA] border-2 border-black font-anton text-sm inline-block">
                     {log.event.replace(/_/g, ' ')}
                   </span>
                 </div>

@@ -6,7 +6,7 @@ const Navbar = () => {
     <div className=' fixed top-0 left-0 z-50 flex flex-row justify-between items-center px-5 w-full h-fit py-5 mx-auto border-b-2 border-black bg-primary shadow-lg shadow-black/50 '>
         <div className='w-1/2 h-fit '>
             <h1 className='heading-text-2 text-4xl  font-anton -mt-3 cursor-pointer '>
-                A<span className='text-yellow-300 text-5xl hover:text-white'>D</span>
+                A<span className='text-purple-300 text-5xl hover:text-white'>D</span>
             </h1>
         </div>
         <div className='w-1/2 text-xl h-full flex flex-row gap-5 justify-end items-center font-freeman'>

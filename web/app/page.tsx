@@ -10,7 +10,7 @@ import { AuthButton } from './components/auth/cards/card'
 import Navbar from './components/global/Navbar'
 
 const FeatureCard = ({ title, description, icon }: { title: string; description: string; icon: any }) => (
-  <div className="bg-amber-100 border-2 border-black brutal-shadow-left hover:translate-x-1 hover:translate-y-1 hover:brutal-shadow-center transition-all duration-300 p-6">
+  <div className="bg-purple-100 border-2 border-black brutal-shadow-left hover:translate-x-1 hover:translate-y-1 hover:brutal-shadow-center transition-all duration-300 p-6">
     <div className="flex items-start gap-4">
       <Image src={icon} alt="icon" className="w-12 h-12 slow-spin" />
       <div>
