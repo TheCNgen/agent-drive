@@ -108,7 +108,7 @@ export const authOptions: AuthOptions = {
             };
 
           } catch (error: any) {
-            console.error(`ORPHANED HEDERA ACCOUNT ${accountId} — registration rolled back`, error);
+            console.error(`Registration rolled back`, error);
             throw new Error(`Registration failed: ${error.message}`);
           } finally {
             await session.endSession();
