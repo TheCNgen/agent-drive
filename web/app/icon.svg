@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#8544FA" rx="112" />
+  <g transform="translate(256, 360)" text-anchor="middle" font-family="Anton, Impact, 'Arial Black', sans-serif" font-weight="bold">
+    <text x="-80" y="0" font-size="300" fill="#FEFBEA">A</text>
+    <text x="80" y="0" font-size="340" fill="#D0B4FF">D</text>
+  </g>
+</svg>
