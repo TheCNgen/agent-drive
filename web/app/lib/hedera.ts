@@ -2,7 +2,20 @@ import { Client, PrivateKey, AccountCreateTransaction, Hbar, TopicMessageSubmitT
 import { KeyManagementServiceClient } from '@google-cloud/kms';
 import { config } from './config';
 
-const kms = new KeyManagementServiceClient();
+const kmsOptions: any = {};
+if (process.env.GCP_CREDENTIALS_B64) {
+  try {
+    const creds = JSON.parse(Buffer.from(process.env.GCP_CREDENTIALS_B64, 'base64').toString('utf8'));
+    kmsOptions.credentials = {
+      client_email: creds.client_email,
+      private_key: creds.private_key,
+    };
+    kmsOptions.projectId = creds.project_id;
+  } catch (e) {
+    console.error('Failed to parse GCP_CREDENTIALS_B64', e);
+  }
+}
+const kms = new KeyManagementServiceClient(kmsOptions);
 
 let client: Client;
 
