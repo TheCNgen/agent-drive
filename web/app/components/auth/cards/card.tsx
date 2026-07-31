@@ -11,7 +11,7 @@ export const AuthButton = () => {
       return (
         <Link 
           href="/dashboard"
-          className="button-primary bg-white text-accent px-8 font-bold text-xl py-2 mt-5"
+          className="button-primary bg-white text-accent px-8 font-bold text-xl py-2"
         >
           DASHBOARD
         </Link>
@@ -20,7 +20,7 @@ export const AuthButton = () => {
       return (
           <Link 
             href="/auth/signin"
-            className="button-primary bg-white text-accent px-8 font-bold text-xl py-2 mt-5"
+            className="button-primary bg-white text-accent px-8 font-bold text-xl py-2"
           >
             GET STARTED
           </Link>
