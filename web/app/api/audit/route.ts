@@ -39,6 +39,8 @@ export async function GET(request: Request) {
           parsed.ownerId === userId ||
           parsed.buyerId === userId || 
           parsed.sellerId === userId ||
+          parsed.buyer === userId ||
+          parsed.seller === userId ||
           parsed.userId === userId ||
           parsed.agentId === userId;
 
