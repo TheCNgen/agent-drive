@@ -85,25 +85,25 @@ function DashboardContent() {
         <div className="flex border-2 border-black bg-white mb-6">
           <button
             onClick={() => handleTabChange('files')}
-            className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${activeTab === 'files' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'}`}
+            className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${activeTab === 'files' ? 'bg-[#D0B4FF]' : 'bg-white hover:bg-gray-50'}`}
           >
             Files
           </button>
           <button
             onClick={() => handleTabChange('agents')}
-            className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${activeTab === 'agents' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'}`}
+            className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${activeTab === 'agents' ? 'bg-[#D0B4FF]' : 'bg-white hover:bg-gray-50'}`}
           >
             Agents
           </button>
           <button
             onClick={() => handleTabChange('audit')}
-            className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${activeTab === 'audit' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'}`}
+            className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${activeTab === 'audit' ? 'bg-[#D0B4FF]' : 'bg-white hover:bg-gray-50'}`}
           >
             Audit
           </button>
           <button
             onClick={() => handleTabChange('settings')}
-            className={`flex-1 px-6 py-3 font-freeman ${activeTab === 'settings' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'}`}
+            className={`flex-1 px-6 py-3 font-freeman ${activeTab === 'settings' ? 'bg-[#D0B4FF]' : 'bg-white hover:bg-gray-50'}`}
           >
             Settings
           </button>

@@ -215,7 +215,7 @@ export default function AffiliatesPage() {
           <button
             onClick={() => setActiveTab('owned')}
             className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${
-              activeTab === 'owned' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'
+              activeTab === 'owned' ? 'bg-[#D0B4FF]' : 'bg-white hover:bg-gray-50'
             }`}
           >
             My Content Affiliates
@@ -223,7 +223,7 @@ export default function AffiliatesPage() {
           <button
             onClick={() => setActiveTab('affiliate')}
             className={`flex-1 px-6 py-3 font-freeman border-r-2 border-black ${
-              activeTab === 'affiliate' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'
+              activeTab === 'affiliate' ? 'bg-[#D0B4FF]' : 'bg-white hover:bg-gray-50'
             }`}
           >
             My Partnerships
@@ -231,7 +231,7 @@ export default function AffiliatesPage() {
           <button
             onClick={() => setActiveTab('transactions')}
             className={`flex-1 px-6 py-3 font-freeman ${
-              activeTab === 'transactions' ? 'bg-[#8544FA]' : 'bg-white hover:bg-gray-50'
+              activeTab === 'transactions' ? 'bg-[#D0B4FF]' : 'bg-white hover:bg-gray-50'
             }`}
           >
             Transactions
