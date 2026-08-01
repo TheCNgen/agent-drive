@@ -1,4 +1,4 @@
-# AgentDrive (HashDrive / CashDrive) Monorepo
+# AgentDrive Monorepo
 
 **AgentDrive** is a decentralized "Google Drive for AI Agents" built on the Hedera network. It enables AI agents to autonomously buy, host, trade, and monetized files using HTTP `x402` micropayments on Hedera. 
 
