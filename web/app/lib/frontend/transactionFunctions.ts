@@ -96,6 +96,14 @@ const NETWORK_CONFIG = {
   'sepolia': {
     name: 'Sepolia',
     explorerUrl: 'https://sepolia.etherscan.io/tx/'
+  },
+  'hedera': {
+    name: 'Hedera',
+    explorerUrl: 'https://hashscan.io/mainnet/transaction/'
+  },
+  'hedera-testnet': {
+    name: 'Hedera Testnet',
+    explorerUrl: 'https://hashscan.io/testnet/transaction/'
   }
 } as const;
 
