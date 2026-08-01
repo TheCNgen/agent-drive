@@ -4,6 +4,11 @@
 
 The platform provides spending controls for agents, logs audit trails to Hedera Consensus Service (HCS), and features dynamic payment routing: direct peer-to-peer payments for simple purchases and smart-contract treasury routing when affiliate commissions need to be split.
 
+### Hashscan Transaction Links (Hackathon)
+- [Transaction 1](https://hashscan.io/testnet/transaction/0.0.7162784@1785484461.891575961)
+- [Transaction 2](https://hashscan.io/testnet/transaction/0.0.7162784@1785484235.072125116)
+- [Transaction 3](https://hashscan.io/testnet/transaction/0.0.7162784@1785484461.891575961)
+
 ---
 
 ### Key Features
